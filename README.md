@@ -81,6 +81,7 @@ The agents support any cloud provider. AWS examples are included in the infra ag
 ## What's Included
 
 ### Skills (reusable behaviors)
+- **snip** — CLI proxy that filters shell output (npm, jest, tsc, git) before it reaches the model. Installed automatically; avg 97% token reduction.
 - **harness-gates** — Mandatory checkpoints before/during/after actions
 - **feedback-loop** — Autonomous execute→verify→correct cycle
 - **audit-trail** — Complete action logging

@@ -67,6 +67,7 @@ When working on UI tasks, three additional skills activate automatically:
 
 ## Skills Ativos
 
+- `snip` — CLI proxy ativo via PreToolUse hook. Filtra saída de npm/npx/git/jest/tsc antes de chegar ao modelo. Ver `skills/snip/SKILL.md`. Checar ganhos: `snip gain`.
 - `caveman` — Estilo de comunicação token-eficiente (`skills/caveman/SKILL.md`)
 
 ## Token Efficiency (Caveman Mode)
