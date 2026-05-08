@@ -1,0 +1,29 @@
+FROM node:20-alpine
+
+RUN apk add --no-cache \
+    bash curl git python3 py3-pip jq \
+    terraform opentofu \
+    && npm install -g npm@latest
+
+# Install IaC security tools
+RUN pip3 install --break-system-packages checkov
+RUN curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
+RUN curl -s https://raw.githubusercontent.com/zegl/kube-score/master/install.sh | bash
+
+# Install trivy
+RUN curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+
+# SonarQube scanner
+ARG SONAR_SCANNER_VERSION=5.0.1.3006
+RUN curl -sL "https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}-linux.zip" -o /tmp/sonar.zip \
+    && unzip /tmp/sonar.zip -d /opt \
+    && ln -s /opt/sonar-scanner-${SONAR_SCANNER_VERSION}-linux/bin/sonar-scanner /usr/local/bin/sonar-scanner \
+    && rm /tmp/sonar.zip
+
+WORKDIR /workspace
+ENV SONAR_HOST_URL=http://sonarqube:9000
+
+COPY scripts/sonar-scan.sh /usr/local/bin/sonar-scan
+RUN chmod +x /usr/local/bin/sonar-scan
+
+ENTRYPOINT ["/bin/bash"]
