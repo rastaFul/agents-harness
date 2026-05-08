@@ -37,6 +37,7 @@ All new code follows Red-Green-Refactor. NO EXCEPTION.
 ### 1. Every session starts with context
 - Read `.specs/project/STATE.md` (if exists)
 - Read `.specs/project/DECISIONS.md` (if exists)
+- Read `.claude/napkin.md` (if exists) — tactical corrections and patterns from past sessions
 - Inform the user where you left off and what's pending
 
 ### 1b. When initializing a new project
@@ -86,6 +87,7 @@ Create ALL files in `.specs/project/`:
 - TypeScript: `npx tsc --noEmit`
 - npm audit: `npm audit --audit-level=critical`
 - SonarQube: `sonar-scanner` (when available in sandbox)
+- Playwright MCP: E2E gate for any task with visual output (see `steering/visual-automation.md`)
 
 ### 4. Feedback loop
 - If gate fails: analyze output, fix, re-run gate
@@ -148,6 +150,20 @@ When the user asks to "run alone", "keep executing", or "autonomous":
 - Activate circuit breaker with spec limits
 - When finished: run complete final validation
 - Result only returns to original project after human approval
+
+### 10. Frontend / UI tasks
+
+When a task involves any visual output (component, page, layout, form, dashboard):
+
+1. **Read `.interface-design/system.md`** before generating any UI code
+   - If missing: create it with minimum tokens, confirm with user, record in DECISIONS.md
+2. **Use only tokens defined in `system.md`** — code that contradicts it is BLOCKED
+3. **Write E2E test first** (Playwright MCP, TDD Red) before implementing the component
+4. **Run Playwright MCP gate** after implementation — task is NOT done until it PASSES
+5. **Save screenshots** to `.specs/features/[feature]/screenshots/` as acceptance evidence
+6. **Record new design decisions** in both `system.md` and `DECISIONS.md`
+
+Keywords that trigger UI mode: component, page, layout, form, modal, table, dashboard, color, spacing, typography, theme, token, design system.
 
 ## Languages
 

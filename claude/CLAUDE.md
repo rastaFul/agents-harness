@@ -50,4 +50,17 @@ Configurable conventions in `steering/`. Edit to match your project:
 - `architecture.md` — Architecture pattern (default: Clean Architecture)
 - `service-layers.md` — Layering (default: Handler → Service → Repository)
 - `testing.md` — Test standards (default: TDD with Jest)
+- `frontend-design.md` — UI stack, design tokens, component scope
+- `visual-automation.md` — Playwright MCP thresholds and E2E scope
+- `session-memory.md` — Napkin protocol and entry boundaries
+- `research-extraction.md` — Firecrawl limits, allowed/blocked domains
 - Others: error-handling, api-rest, resilience, security, observability
+
+## Frontend Skills
+
+When working on UI tasks, three additional skills activate automatically:
+
+- **interface-design** — Reads/writes `.interface-design/system.md` to maintain design token consistency across sessions. Read before any component generation.
+- **playwright-mcp** — E2E and visual regression gate via Playwright MCP server. Mandatory gate for all tasks with visual output.
+- **napkin** — Tactical session memory in `.claude/napkin.md`. Read at session start; write on corrections and pattern discoveries.
+- **firecrawl** — Web scraping for external design references and research. Use when WebSearch/WebFetch is insufficient.

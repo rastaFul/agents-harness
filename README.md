@@ -89,6 +89,10 @@ The agents support any cloud provider. AWS examples are included in the infra ag
 - **spec-manager** — Scripts to create/manage `.specs/` structure
 - **audit-writer** — Scripts to write audit entries and metrics
 - **code-gates** — Scripts to run TypeScript/Node.js quality gates
+- **interface-design** — Persistent design system guardian via `.interface-design/system.md`
+- **playwright-mcp** — E2E and visual regression gate using Playwright MCP server
+- **napkin** — Tactical session memory per repository via `.claude/napkin.md`
+- **firecrawl** — Web scraping and structured extraction for research inputs
 
 ### Agents
 - **harness-infra** — Orchestrator for infrastructure (Terraform, K8s, AWS, Helm, Docker)
@@ -106,6 +110,10 @@ The agents support any cloud provider. AWS examples are included in the infra ag
 - Security audit rules
 - Dependency audit rules
 - OpenTelemetry observability patterns
+- Frontend design conventions (stack, tokens, component scope)
+- Visual automation rules (Playwright thresholds, E2E coverage targets)
+- Session memory protocol (Napkin write/read boundaries)
+- Research extraction rules (Firecrawl limits, domain allow/block lists)
 
 ## License
 
