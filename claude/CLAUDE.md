@@ -64,3 +64,33 @@ When working on UI tasks, three additional skills activate automatically:
 - **playwright-mcp** — E2E and visual regression gate via Playwright MCP server. Mandatory gate for all tasks with visual output.
 - **napkin** — Tactical session memory in `.claude/napkin.md`. Read at session start; write on corrections and pattern discoveries.
 - **firecrawl** — Web scraping for external design references and research. Use when WebSearch/WebFetch is insufficient.
+
+## Skills Ativos
+
+- `caveman` — Estilo de comunicação token-eficiente (`skills/caveman/SKILL.md`)
+
+## Token Efficiency (Caveman Mode)
+
+Maximize Claude Pro session duration. Always apply:
+
+**Output:**
+- Respostas curtas, diretas, técnicas
+- Sem saudações, rodeios, resumos duplicados, encerramentos decorativos
+- Código mínimo funcional; sem boilerplate desnecessário
+- Não explique o óbvio; não repita a pergunta
+
+**Input:**
+- Usar só contexto necessário; ignorar histórico irrelevante
+- Compactar contexto longo; trabalhar só com trecho útil
+
+**Model routing:**
+- Modelo leve: resumos, formatação, extração, perguntas diretas
+- Modelo forte: depuração difícil, arquitetura, decisões complexas
+- Nunca escalar por padrão
+
+**Execução:**
+- Agrupar tarefas relacionadas em uma resposta
+- Não quebrar tarefa simples em múltiplas mensagens
+- Encerrar objetivamente quando resolvido
+
+**Regra final:** conflito verbosidade × economia → priorize economia.
