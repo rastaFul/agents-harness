@@ -94,3 +94,21 @@ Maximize Claude Pro session duration. Always apply:
 - Encerrar objetivamente quando resolvido
 
 **Regra final:** conflito verbosidade × economia → priorize economia.
+
+## Tool Output Compression
+
+Minimizar tokens consumidos por saídas de ferramentas (npm test, tsc, eslint, build, lint, etc).
+
+**SUCESSO:** `[comando] | OK | resumo curto`
+**FALHA:** `[comando] | FAIL | N erros | arquivo:linha mensagem`
+
+Regras:
+- Nunca enviar saída completa ao modelo salvo necessidade estrita
+- Passar: nome + OK + contagem + duração
+- Falhar: nome + FAIL + N erros + arquivos + linhas relevantes + bloco mínimo de erro
+- Logs longos: usar tail/head/grep/sed/awk — descartar progresso, barras, downloads, stack traces redundantes
+- Testes OK: só resumo final. Testes FAIL: só suites falhas + trecho mínimo
+- TypeScript: arquivo:linha:col código mensagem — agrupar erros repetidos
+- Lint: agrupar por arquivo, remover repetições, manter regra+linha+mensagem
+- Não reenviar logs já vistos — preservar só resumo estruturado do último resultado
+- Output bruto só quando resumo não basta para tomar decisão
