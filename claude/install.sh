@@ -74,6 +74,32 @@ if command -v snip &>/dev/null; then
   snip init --agent claude-code 2>/dev/null && echo "✅ snip hook registered in Claude Code" || true
 fi
 
+# Install Playwright MCP (E2E gate)
+install_playwright_mcp() {
+  echo "📦 Installing @playwright/mcp globally..."
+  if npm install -g @playwright/mcp@latest &>/dev/null; then
+    echo "✅ @playwright/mcp installed"
+  else
+    echo "⚠️  @playwright/mcp install failed — E2E gate unavailable"
+    return
+  fi
+
+  # Register MCP server in user-scope Claude Code config
+  if command -v claude &>/dev/null; then
+    if claude mcp list 2>/dev/null | grep -q "playwright"; then
+      echo "✅ playwright MCP already registered"
+    else
+      claude mcp add playwright -s user -- npx @playwright/mcp@latest 2>/dev/null \
+        && echo "✅ playwright MCP registered (user scope)" \
+        || echo "⚠️  playwright MCP registration failed — run manually: claude mcp add playwright -s user -- npx @playwright/mcp@latest"
+    fi
+  else
+    echo "⚠️  claude CLI not found — skip MCP registration"
+  fi
+}
+
+install_playwright_mcp
+
 echo ""
 echo "✅ Installed successfully!"
 echo ""
