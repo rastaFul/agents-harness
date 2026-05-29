@@ -56,12 +56,49 @@ Configurable conventions in `steering/`. Edit to match your project:
 - `research-extraction.md` — Firecrawl limits, allowed/blocked domains
 - Others: error-handling, api-rest, resilience, security, observability
 
+## Gate E2E — Playwright MCP (OBRIGATÓRIO)
+
+**Ativado automaticamente** quando o projeto envolve:
+- Interface (componente, página, formulário, modal, dashboard, layout)
+- Integração com sistemas externos testável via browser
+- Fluxo de usuário com múltiplos passos
+- Qualquer aceitação visual descrita na spec
+
+**O que o gate faz:**
+Sobe um browser real (Chromium headless) via Playwright MCP e navega pelas funcionalidades como um usuário real: clica, preenche formulários, verifica textos, faz assertions visuais.
+
+**Protocolo obrigatório:**
+```
+1. Verificar server rodando: curl -sf http://localhost:PORT || erro
+2. Escrever teste E2E ANTES da implementação (TDD Red — deve falhar)
+3. Confirmar falha do teste
+4. Implementar feature
+5. Rodar gate Playwright: deve PASSAR antes de marcar task DONE
+6. Salvar screenshots em .specs/features/[feature]/screenshots/
+7. Registrar em execution.md: playwright: PASS|FAIL (X tests, Y passed)
+```
+
+**Fluxo do browser (o que executar):**
+- Navegar para a URL da feature (`playwright_navigate`)
+- Interagir como usuário real: clicar, digitar, submeter (`playwright_click`, `playwright_fill`)
+- Assertions: verificar textos, elementos visíveis, estados (`playwright_get_visible_text`, `playwright_get_visible_html`)
+- Capturar screenshot como evidência (`playwright_screenshot`)
+- Testar happy path + pelo menos 1 error path por fluxo crítico
+
+**NÃO usar Playwright para:**
+- Testes unitários de lógica → Jest
+- Testes de API pura → Supertest / curl
+- Tarefas de backend sem UI
+- Fase TDD Red (falha esperada não é gate failure)
+
+**Referência:** `steering/visual-automation.md`
+
 ## Frontend Skills
 
-When working on UI tasks, three additional skills activate automatically:
+When working on UI tasks, these additional skills activate automatically:
 
 - **interface-design** — Reads/writes `.interface-design/system.md` to maintain design token consistency across sessions. Read before any component generation.
-- **playwright-mcp** — E2E and visual regression gate via Playwright MCP server. Mandatory gate for all tasks with visual output.
+- **playwright-mcp** — E2E and visual regression gate via Playwright MCP server. Mandatory gate for all tasks with visual output. Protocol above applies.
 - **napkin** — Tactical session memory in `.claude/napkin.md`. Read at session start; write on corrections and pattern discoveries.
 - **firecrawl** — Web scraping for external design references and research. Use when WebSearch/WebFetch is insufficient.
 
@@ -69,6 +106,7 @@ When working on UI tasks, three additional skills activate automatically:
 
 - `snip` — CLI proxy ativo via PreToolUse hook. Filtra saída de npm/npx/git/jest/tsc antes de chegar ao modelo. Ver `skills/snip/SKILL.md`. Checar ganhos: `snip gain`.
 - `caveman` — Estilo de comunicação token-eficiente (`skills/caveman/SKILL.md`)
+- `playwright-mcp` — Gate E2E via browser real (`skills/playwright-mcp/SKILL.md`)
 
 ## Token Efficiency (Caveman Mode)
 
