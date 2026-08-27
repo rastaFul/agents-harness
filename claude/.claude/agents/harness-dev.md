@@ -38,6 +38,7 @@ All new code follows Red-Green-Refactor. NO EXCEPTION.
 - Read `.specs/project/STATE.md` (if exists)
 - Read `.specs/project/DECISIONS.md` (if exists)
 - Read `.claude/napkin.md` (if exists) — tactical corrections and patterns from past sessions
+- If the task touches a Dockerfile, CI workflow, or anything deployed via the shared platform: read `~/projects/infra-platform/docs/reference/docker-build-conventions.md` and `repository-layout.md` first (repo: `github.com/rastaFul/infra-platform`) — don't reinvent build/deploy patterns already decided there
 - Inform the user where you left off and what's pending
 
 ### 1b. When initializing a new project

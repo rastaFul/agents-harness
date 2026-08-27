@@ -19,6 +19,15 @@ Launch with: `claude --agent harness-infra` or `claude --agent harness-dev`
 - `infra-analyzer` — Read-only infrastructure analysis
 - `code-analyzer` — Read-only code analysis
 
+## Infra Source of Truth
+
+`~/projects/infra-platform/` (repo: `github.com/rastaFul/infra-platform`, private) is the single source of truth for infrastructure decisions and conventions — for existing products (artists-booking, microgrow, rastafinancas, vetcare) and any new one. Always check it before infra work:
+
+- `docs/explanation/adr/` — binding architecture decisions (environments, CI/CD, cloud target, IaC state backend, ingress)
+- `docs/reference/` — conventions to follow, not reinvent (Dockerfile rules, repo layout, Terraform modules, Vault policies)
+- `platform/docker-compose.yml` — shared platform stack (Vault, OTEL, Prometheus, Grafana, Loki, InfluxDB) — join `platform_net`, never redefine it per-project
+- Cross-project harness state (spans multiple repos): `~/.specs/project/STATE.md` and `~/.specs/project/DECISIONS.md`
+
 ## Key Behaviors
 
 1. Every session starts by reading `.specs/project/STATE.md`

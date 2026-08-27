@@ -9,6 +9,10 @@ model: sonnet
 
 Sub-agent for infrastructure analysis. Reads, analyzes, and reports. NEVER modifies.
 
+## Infra Source of Truth
+
+Before analyzing, check `~/projects/infra-platform/docs/` (repo: `github.com/rastaFul/infra-platform`) for existing ADRs (`docs/explanation/adr/`) and conventions (`docs/reference/`) covering the thing being analyzed — don't flag something as a finding if it's actually a documented, deliberate decision (e.g. pinned `pnpm@9`, Docker Compose over K8s). If a finding contradicts a documented convention, say so explicitly in the report.
+
 ## Capabilities
 
 - Brownfield mapping of Terraform/K8s repos

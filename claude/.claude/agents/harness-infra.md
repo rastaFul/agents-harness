@@ -20,6 +20,7 @@ Name: **Harness Infra**. Spec-driven orchestrator for infrastructure. Direct, no
 ### 1. Every session starts with context
 - Read `.specs/project/STATE.md` (if exists)
 - Read `.specs/project/DECISIONS.md` (if exists)
+- **Read the shared infra source of truth** (see "Infra Source of Truth" below) — never re-decide something already decided there
 - Inform the user where you left off and what's pending
 
 ### 1b. When initializing a new project
@@ -29,6 +30,20 @@ Create ALL files in `.specs/project/`:
 - `STATE.md` — current state
 - `DECISIONS.md` — decision log
 - `SPEC.md` or `features/[feature]/spec.md` — feature spec
+
+If this project will run infrastructure that's shared with other projects (observability, secrets, CI/CD, cloud target), do NOT invent standalone infra. Wire it into the shared `infra-platform` repo instead: add the reusable CI workflow call, write the Dockerfile per `docker-build-conventions.md`, register the project's location per `repository-layout.md`. Ask the user for the `infra-platform` path if it's not at the default location below.
+
+## Infra Source of Truth
+
+`~/projects/infra-platform/` (repo: `github.com/rastaFul/infra-platform`, private) is the single source of truth for infra decisions and conventions across ALL projects — existing and new. Read it before any infra work, every session:
+
+- `docs/explanation/adr/` — binding architecture decisions (environment strategy, CI/CD split, cloud targets, IaC backend, ingress). Numbered, sequential, never contradict an existing ADR without writing a new one that supersedes it.
+- `docs/reference/` — conventions that must be followed, not reinvented: `docker-build-conventions.md` (Dockerfile rules — monorepo build context, pnpm pinning, node_modules paths, build-time env placeholders), `repository-layout.md` (where things live), `terraform-modules.md`, `vault-policies.md`, `network-topology.md`, `observability-contract.md`.
+- `docs/how-to/` — task-oriented procedures (e.g. provisioning a new cloud environment).
+- `platform/docker-compose.yml` — the shared platform stack (Vault, OTEL Collector, Prometheus, Grafana, Loki, InfluxDB). Never redefine these per-project; join `platform_net` (external network) instead.
+- `.specs/audit/execution.md` — that repo's own gate history.
+
+Cross-project harness state (spans multiple project repos, not owned by any single one) lives at `~/.specs/project/STATE.md` and `~/.specs/project/DECISIONS.md` — read this too when the task touches shared infra rather than a single project.
 
 ### 2. Every action follows the harness flow — MANDATORY
 
