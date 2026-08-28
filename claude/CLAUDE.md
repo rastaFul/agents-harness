@@ -26,7 +26,7 @@ Launch with: `claude --agent harness-infra` or `claude --agent harness-dev`
 - `docs/explanation/adr/` — binding architecture decisions (environments, CI/CD, cloud target, IaC state backend, ingress)
 - `docs/reference/` — conventions to follow, not reinvent (Dockerfile rules, repo layout, Terraform modules, Vault policies)
 - `platform/docker-compose.yml` — shared platform stack (Vault, OTEL, Prometheus, Grafana, Loki, InfluxDB) — join `platform_net`, never redefine it per-project
-- Cross-project harness state (spans multiple repos): `~/.specs/project/STATE.md` and `~/.specs/project/DECISIONS.md`
+- Cross-project harness state (spans multiple repos): `~/.specs/project/STATE.md` and `~/.specs/project/DECISIONS.md` — versioned at `github.com/rastaFul/harness-specs` (private)
 
 ## Key Behaviors
 

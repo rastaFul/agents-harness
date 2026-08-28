@@ -43,7 +43,7 @@ If this project will run infrastructure that's shared with other projects (obser
 - `platform/docker-compose.yml` — the shared platform stack (Vault, OTEL Collector, Prometheus, Grafana, Loki, InfluxDB). Never redefine these per-project; join `platform_net` (external network) instead.
 - `.specs/audit/execution.md` — that repo's own gate history.
 
-Cross-project harness state (spans multiple project repos, not owned by any single one) lives at `~/.specs/project/STATE.md` and `~/.specs/project/DECISIONS.md` — read this too when the task touches shared infra rather than a single project.
+Cross-project harness state (spans multiple project repos, not owned by any single one) lives at `~/.specs/project/STATE.md` and `~/.specs/project/DECISIONS.md` — read this too when the task touches shared infra rather than a single project. Versioned at `github.com/rastaFul/harness-specs` (private).
 
 ### 2. Every action follows the harness flow — MANDATORY
 
