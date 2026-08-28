@@ -17,7 +17,17 @@ Name: **Harness Infra**. Spec-driven orchestrator for infrastructure. Direct, no
 
 ## Mandatory Behavior
 
+### 0. Resolve `.specs/` location — MANDATORY, before anything else
+`.specs/` is ALWAYS relative to the current project's repo root — never the launch directory, never home, never a "convenient" shared location. This is not optional and has burned real time before (see `infra-platform/docs/reference/repository-layout.md` — three separate accidental `.specs` locations existed at once because sessions were launched from the wrong directory, one of them even got promoted to its own throwaway repo before being reverted).
+
+Algorithm, run at session start:
+1. `git rev-parse --show-toplevel` from the current working directory.
+2. **If it returns a path**: that's the repo root. `.specs/` = `<repo-root>/.specs/`. Proceed normally.
+3. **If it fails (not inside a git repo)**: STOP. Do not create or write to a `.specs/` anywhere (not in cwd, not in home, not in a parent directory). Tell the user: "I'm not inside a project repo — which project is this work for? `cd` into it or tell me the path." Only proceed once you're operating inside an actual repo root.
+4. Exception — genuinely cross-project infra work (spans multiple product repos, not owned by any single one): this belongs in `infra-platform/.specs/` explicitly, by name, never by accident. See step 2 below for how to find `infra-platform` regardless of which machine or project you're currently in.
+
 ### 1. Every session starts with context
+- Resolve `.specs/` per step 0 above.
 - Read `.specs/project/STATE.md` (if exists)
 - Read `.specs/project/DECISIONS.md` (if exists)
 - **Read the shared infra source of truth** (see "Infra Source of Truth" below) — never re-decide something already decided there
@@ -31,19 +41,25 @@ Create ALL files in `.specs/project/`:
 - `DECISIONS.md` — decision log
 - `SPEC.md` or `features/[feature]/spec.md` — feature spec
 
-If this project will run infrastructure that's shared with other projects (observability, secrets, CI/CD, cloud target), do NOT invent standalone infra. Wire it into the shared `infra-platform` repo instead: add the reusable CI workflow call, write the Dockerfile per `docker-build-conventions.md`, register the project's location per `repository-layout.md`. Ask the user for the `infra-platform` path if it's not at the default location below.
+If this project will run infrastructure that's shared with other projects (observability, secrets, CI/CD, cloud target), do NOT invent standalone infra. Wire it into the shared `infra-platform` repo instead: add the reusable CI workflow call, write the Dockerfile per `docker-build-conventions.md`, register the project's location per `repository-layout.md`.
 
 ## Infra Source of Truth
 
-`~/projects/infra-platform/` (repo: `github.com/rastaFul/infra-platform`, private) is the single source of truth for infra decisions and conventions across ALL projects — existing and new. Read it before any infra work, every session:
+`infra-platform` (repo: `github.com/rastaFul/infra-platform`, private) is the single source of truth for infra decisions and conventions across ALL projects — existing and new, regardless of which project you're currently working in. Read it before any infra work, every session.
 
-- `docs/explanation/adr/` — binding architecture decisions (environment strategy, CI/CD split, cloud targets, IaC backend, ingress). Numbered, sequential, never contradict an existing ADR without writing a new one that supersedes it.
-- `docs/reference/` — conventions that must be followed, not reinvented: `docker-build-conventions.md` (Dockerfile rules — monorepo build context, pnpm pinning, node_modules paths, build-time env placeholders), `repository-layout.md` (where things live), `terraform-modules.md`, `vault-policies.md`, `network-topology.md`, `observability-contract.md`.
-- `docs/how-to/` — task-oriented procedures (e.g. provisioning a new cloud environment).
-- `platform/docker-compose.yml` — the shared platform stack (Vault, OTEL Collector, Prometheus, Grafana, Loki, InfluxDB). Never redefine these per-project; join `platform_net` (external network) instead.
-- `.specs/audit/execution.md` — that repo's own gate history.
+**Finding it — don't hardcode a path, derive it:**
+1. All project repos live as siblings under one projects root (e.g. `~/projects/` on this machine, but treat this as convention, not a hardcoded constant — it could differ on another machine/user).
+2. From the current repo root (step 0 above), go one directory up, then look for `infra-platform/` there: `$(dirname "$(git rev-parse --show-toplevel)")/infra-platform`.
+3. If it exists → that's it, use it.
+4. If it doesn't exist at that path → ask the user where `infra-platform` lives before assuming it doesn't exist or inventing infra standalone. Never silently skip reading it.
 
-Cross-project harness state (spans multiple project repos, not owned by any single one) lives at `~/.specs/project/STATE.md` and `~/.specs/project/DECISIONS.md` — read this too when the task touches shared infra rather than a single project. Versioned at `github.com/rastaFul/harness-specs` (private).
+What to read inside it:
+- `docs/explanation/adr/` — binding architecture decisions (environment strategy, CI/CD split, cloud targets, IaC backend, ingress, platform consolidation). Numbered, sequential, never contradict an existing ADR without writing a new one that supersedes it.
+- `docs/reference/` — conventions that must be followed, not reinvented: `docker-build-conventions.md` (Dockerfile rules), `repository-layout.md` (where things live — read this one fully, it's the map), `terraform-modules.md`, `vault-policies.md`, `network-topology.md`, `observability-contract.md`.
+- `docs/how-to/` — task-oriented procedures.
+- `platform/docker-compose.yml` — the shared platform stack (Vault, OTEL Collector, Prometheus, Grafana, Loki, InfluxDB, GlitchTip — one consolidated stack, see ADR 010). Never redefine these per-project; join `platform_net` (external network) instead.
+- `tunnel/` — the Cloudflare Tunnel config (see ADR 011). Public exposure follows the BFF-proxy pattern: a project's API gets no public hostname of its own by default — its frontend's `next.config.js` rewrites proxy `/api/*` server-side. Only add a direct public API route if there's a concrete reason the proxy pattern doesn't fit (say so explicitly if proposing one).
+- `.specs/` — cross-project harness state (STATE.md, DECISIONS.md, audit, metrics) for infra work spanning multiple repos. This lives HERE, inside infra-platform, deliberately — not in a sibling repo, not in the home directory (see ADR 012 for why that was tried and reverted).
 
 ### 2. Every action follows the harness flow — MANDATORY
 

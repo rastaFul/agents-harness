@@ -19,14 +19,27 @@ Launch with: `claude --agent harness-infra` or `claude --agent harness-dev`
 - `infra-analyzer` — Read-only infrastructure analysis
 - `code-analyzer` — Read-only code analysis
 
+## `.specs/` Location — MANDATORY, resolve every session before writing anything
+
+`.specs/` is ALWAYS relative to the current project's repo root, never the directory Claude was launched from. Algorithm:
+1. `git rev-parse --show-toplevel` from cwd. That's the repo root — `.specs/` = `<repo-root>/.specs/`.
+2. Not inside a git repo? STOP. Ask the user which project this work is for. Never default to writing `.specs/` in home or a parent directory.
+3. Exception: genuinely cross-project infra work belongs in `infra-platform/.specs/` explicitly, by name — see below for how to find `infra-platform` regardless of which project or machine you're on.
+
+This rule exists because it was broken three separate times before it was written down (session launched from the wrong directory each time) — one of those accidents even got promoted to its own throwaway GitHub repo before being caught and reverted. See `infra-platform/docs/reference/repository-layout.md` for the full story and `docs/explanation/adr/012-harness-specs-repo-reverted.md`.
+
 ## Infra Source of Truth
 
-`~/projects/infra-platform/` (repo: `github.com/rastaFul/infra-platform`, private) is the single source of truth for infrastructure decisions and conventions — for existing products (artists-booking, microgrow, rastafinancas, vetcare) and any new one. Always check it before infra work:
+`infra-platform` (repo: `github.com/rastaFul/infra-platform`, private) is the single source of truth for infrastructure decisions and conventions — for existing products (artists-booking, microgrow, rastafinancas, vetcare) and any new one, regardless of which project you're currently working in. Always check it before infra work.
 
-- `docs/explanation/adr/` — binding architecture decisions (environments, CI/CD, cloud target, IaC state backend, ingress)
-- `docs/reference/` — conventions to follow, not reinvent (Dockerfile rules, repo layout, Terraform modules, Vault policies)
-- `platform/docker-compose.yml` — shared platform stack (Vault, OTEL, Prometheus, Grafana, Loki, InfluxDB) — join `platform_net`, never redefine it per-project
-- Cross-project harness state (spans multiple repos): `~/.specs/project/STATE.md` and `~/.specs/project/DECISIONS.md` — versioned at `github.com/rastaFul/harness-specs` (private)
+**Finding it — derive, don't hardcode:** all project repos live as siblings under one projects root (convention on this machine: `~/projects/`, but treat that as configurable, not a constant). From the current repo root, go up one level and look for `infra-platform/` there: `$(dirname "$(git rev-parse --show-toplevel)")/infra-platform`. If it's not there, ask the user for its path — never silently skip reading it or invent infra standalone.
+
+What to read:
+- `docs/explanation/adr/` — binding architecture decisions (environments, CI/CD, cloud target, IaC state backend, ingress, platform stack consolidation)
+- `docs/reference/` — conventions to follow, not reinvent (Dockerfile rules, repo layout — read this one fully, it's the map — Terraform modules, Vault policies)
+- `platform/docker-compose.yml` — shared platform stack (Vault, OTEL, Prometheus, Grafana, Loki, InfluxDB, GlitchTip — one consolidated stack) — join `platform_net`, never redefine it per-project
+- `tunnel/` — Cloudflare Tunnel config. Public exposure default: only the frontend gets a public hostname, APIs are reached via server-side proxy (`next.config.js` rewrites) — never assume an API needs its own public route
+- `.specs/` — cross-project harness state (STATE.md, DECISIONS.md, audit, metrics) for work spanning multiple repos. Lives here deliberately, not in a sibling repo or the home directory.
 
 ## Key Behaviors
 

@@ -34,11 +34,15 @@ All new code follows Red-Green-Refactor. NO EXCEPTION.
 - NEVER create code and tests together in batch
 - In audit, register: "TDD: RED (X tests failing) → GREEN (X tests passing)"
 
+### 0. Resolve `.specs/` location — MANDATORY, before anything else
+`.specs/` is ALWAYS relative to the current project's repo root (`git rev-parse --show-toplevel`), never the directory Claude happened to be launched from. If you're not inside a git repo, STOP and ask which project this is for — never write `.specs/` into home or a parent directory "just in case." This rule exists because it was violated repeatedly before — see `infra-platform/docs/reference/repository-layout.md`.
+
 ### 1. Every session starts with context
+- Resolve `.specs/` per step 0.
 - Read `.specs/project/STATE.md` (if exists)
 - Read `.specs/project/DECISIONS.md` (if exists)
 - Read `.claude/napkin.md` (if exists) — tactical corrections and patterns from past sessions
-- If the task touches a Dockerfile, CI workflow, or anything deployed via the shared platform: read `~/projects/infra-platform/docs/reference/docker-build-conventions.md` and `repository-layout.md` first (repo: `github.com/rastaFul/infra-platform`) — don't reinvent build/deploy patterns already decided there
+- If the task touches a Dockerfile, CI workflow, or anything deployed via the shared platform: find `infra-platform` as a sibling of the current repo (`$(dirname "$(git rev-parse --show-toplevel)")/infra-platform` — don't hardcode an absolute path, it must work regardless of which project you're in or which machine you're on) and read `docs/reference/docker-build-conventions.md` and `repository-layout.md` first — don't reinvent build/deploy patterns already decided there. If `infra-platform` isn't at that path, ask the user where it is rather than skipping this step.
 - Inform the user where you left off and what's pending
 
 ### 1b. When initializing a new project

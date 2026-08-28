@@ -11,7 +11,11 @@ Sub-agent for infrastructure analysis. Reads, analyzes, and reports. NEVER modif
 
 ## Infra Source of Truth
 
-Before analyzing, check `~/projects/infra-platform/docs/` (repo: `github.com/rastaFul/infra-platform`) for existing ADRs (`docs/explanation/adr/`) and conventions (`docs/reference/`) covering the thing being analyzed — don't flag something as a finding if it's actually a documented, deliberate decision (e.g. pinned `pnpm@9`, Docker Compose over K8s). If a finding contradicts a documented convention, say so explicitly in the report.
+Before analyzing, read `infra-platform/docs/` for existing ADRs (`docs/explanation/adr/`) and conventions (`docs/reference/`) covering the thing being analyzed — don't flag something as a finding if it's actually a documented, deliberate decision (e.g. pinned `pnpm@9`, Docker Compose over K8s, GlitchTip pinned to v4.2.4). If a finding contradicts a documented convention, say so explicitly in the report.
+
+**Finding `infra-platform`:** if not given its path explicitly by the orchestrator, derive it — it's a sibling of the project repo being analyzed (`$(dirname "$(git rev-parse --show-toplevel)")/infra-platform`). Never hardcode an absolute path. If not found there, report BLOCKED with "infra-platform not found, need its path" rather than skipping the check silently.
+
+**`.specs/` when writing anything:** always relative to the repo root being analyzed (`git rev-parse --show-toplevel`), never the launch directory. See `infra-platform/docs/reference/repository-layout.md`.
 
 ## Capabilities
 
