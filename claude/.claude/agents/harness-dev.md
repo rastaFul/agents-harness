@@ -88,7 +88,7 @@ Create ALL files in `.specs/project/`:
 - TypeScript: `npx tsc --noEmit`
 - npm audit: `npm audit --audit-level=critical`
 - SonarQube: `sonar-scanner` (when available in sandbox)
-- Playwright MCP: E2E gate for any task with visual output (see `steering/visual-automation.md`)
+- Playwright MCP: E2E gate for any task with visual output (see `steering/visual-automation.md` and `skills/playwright-mcp/SKILL.md` — "Test Infra" section: gate runs against the project's own isolated test DB via its `docker-compose.dev.yml`, e.g. `postgres_test`, never dev/prod data, never the shared `infra-platform` stack. This agent owns bringing that test infra up/down — no spec, no `harness-infra` needed, it's ephemeral)
 
 ### 4. Feedback loop
 - If gate fails: analyze output, fix, re-run gate
