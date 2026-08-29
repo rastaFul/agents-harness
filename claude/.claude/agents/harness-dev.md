@@ -84,7 +84,8 @@ Create ALL files in `.specs/project/`:
 2. Verify coverage ≥80% in use-cases/services. If below → add tests.
 3. Register summary in `.specs/audit/execution.md`
 4. **CREATE metrics file** in `.specs/metrics/` — MANDATORY
-5. Update STATE.md: Status → COMPLETED or PARTIAL
+5. If any task this session classified SIGNIFICANT under `steering/ux-journey.md`: confirm `ux-journey-judge` returned PASS for each — a pending or FAILED UX evaluation blocks step 6 below (`Status: COMPLETED`), same as any other unresolved gate.
+6. Update STATE.md: Status → COMPLETED or PARTIAL
 
 ### 3. Verification is external — NEVER skip
 - ESLint: `npm run lint`
@@ -93,6 +94,7 @@ Create ALL files in `.specs/project/`:
 - npm audit: `npm audit --audit-level=critical`
 - SonarQube: `sonar-scanner` (when available in sandbox)
 - Playwright MCP: E2E gate for any task with visual output (see `steering/visual-automation.md` and `skills/playwright-mcp/SKILL.md` — "Test Infra" section: gate runs against the project's own isolated test DB via its `docker-compose.dev.yml`, e.g. `postgres_test`, never dev/prod data, never the shared `infra-platform` stack. This agent owns bringing that test infra up/down — no spec, no `harness-infra` needed, it's ephemeral)
+- `ux-journey-judge`: independent goal-completion/usability evaluation for SIGNIFICANT-classified UI changes (see `skills/ux-journey/SKILL.md`) — answers "can an implementation-blind user reach the goal?", separate from and after the Playwright functional gate above. Must PASS before the task is DONE.
 
 ### 4. Feedback loop
 - If gate fails: analyze output, fix, re-run gate
@@ -147,6 +149,8 @@ Quick mode is activated ONLY when the user uses one of these expressions:
 **Retrospec hook — MANDATORY at end of quick mode:**
 When a quick mode execution modifies code, the agent MUST generate a retroactive spec in `.specs/features/[feature]/spec-retro.md`.
 
+**If the change classifies SIGNIFICANT (`skills/ux-journey/SKILL.md`):** quick mode skips journey *approval*, never the *gate*. Author `.specs/features/[feature]/journey.md` retroactively from the user's original request (run `create-journey.sh` right after `create-retrospec.sh`), then run `ux-journey-judge` exactly as in normal mode. A UX FAIL blocks `Status: COMPLETED` the same as normal mode.
+
 ### 9. Autonomous execution
 When the user asks to "run alone", "keep executing", or "autonomous":
 - REQUIRE running inside the sandbox Docker
@@ -160,13 +164,19 @@ When the user asks to "run alone", "keep executing", or "autonomous":
 
 When a task involves any visual output (component, page, layout, form, dashboard):
 
-1. **Read `.interface-design/system.md`** before generating any UI code
+1. **Classify visual impact**: TRIVIAL or SIGNIFICANT (`steering/ux-journey.md` §Classification). Record it in `spec.md`. When unsure, classify SIGNIFICANT.
+2. **Read `.interface-design/system.md`** before generating any UI code
    - If missing: create it with minimum tokens, confirm with user, record in DECISIONS.md
-2. **Use only tokens defined in `system.md`** — code that contradicts it is BLOCKED
-3. **Write E2E test first** (Playwright MCP, TDD Red) before implementing the component
-4. **Run Playwright MCP gate** after implementation — task is NOT done until it PASSES
-5. **Save screenshots** to `.specs/features/[feature]/screenshots/` as acceptance evidence
-6. **Record new design decisions** in both `system.md` and `DECISIONS.md`
+3. **Use only tokens defined in `system.md`** — code that contradicts it is BLOCKED
+4. **If SIGNIFICANT**: author `.specs/features/[feature]/journey.md` BEFORE implementation (`bash skills/spec-manager/scripts/create-journey.sh <project-dir> <feature> "<goal>"`) and get it approved alongside the spec (skip approval only in quick mode — see section 8).
+5. **Write E2E test first** (Playwright MCP, TDD Red) before implementing the component
+6. **Run Playwright MCP gate** after implementation — task is NOT done until it PASSES. `ux-journey-judge` never runs against a functionally broken flow.
+7. **If SIGNIFICANT**: delegate to `ux-journey-judge` via `Task`, passing ONLY the output of `bash skills/spec-manager/scripts/extract-journey-brief.sh <project-dir> <feature>` (never the raw `journey.md`, never a route/selector/component name) plus the base URL and any starting-state setup already done. Must PASS before the task is DONE.
+   - FAIL → read `affected_step`/`suggested_direction`, route per `steering/ux-journey.md` §Feedback routing (implementation bug → re-delegate to `task-executor`; genuine UX gap → revisit spec with the user). Same retry ceiling as other gates (max 5).
+   - BLOCKED → resolve the blocker (app not running, missing seed data, ambiguous starting state) like a blocked `task-executor` return, then retry.
+   - Register: `bash skills/audit-writer/scripts/log-ux-result.sh <project-dir> <feature> <result-json>`.
+8. **Save screenshots** to `.specs/features/[feature]/screenshots/` (functional) and `.specs/features/[feature]/screenshots/ux/` (from `ux-journey-judge`) as acceptance evidence
+9. **Record new design decisions** in both `system.md` and `DECISIONS.md`
 
 Keywords that trigger UI mode: component, page, layout, form, modal, table, dashboard, color, spacing, typography, theme, token, design system.
 

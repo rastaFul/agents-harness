@@ -92,6 +92,7 @@ The agents support any cloud provider. AWS examples are included in the infra ag
 - **code-gates** — Scripts to run TypeScript/Node.js quality gates
 - **interface-design** — Persistent design system guardian via `.interface-design/system.md`
 - **playwright-mcp** — E2E and visual regression gate using Playwright MCP server
+- **ux-journey** — Goal-completion/usability gate for significant UI changes, independent from functional E2E — orchestrates the `ux-journey-judge` sub-agent
 - **napkin** — Tactical session memory per repository via `.claude/napkin.md`
 - **firecrawl** — Web scraping and structured extraction for research inputs
 
@@ -101,6 +102,7 @@ The agents support any cloud provider. AWS examples are included in the infra ag
 - **task-executor** — Sub-agent that implements individual tasks
 - **infra-analyzer** — Sub-agent for read-only infrastructure analysis
 - **code-analyzer** — Sub-agent for read-only code analysis
+- **ux-journey-judge** — Independent, browser-only sub-agent that evaluates whether a goal is reachable by a user who has never seen the implementation (`harness-dev` only)
 
 ### Steering (configurable conventions)
 - Architecture patterns (Clean Architecture, service layers)
@@ -113,6 +115,7 @@ The agents support any cloud provider. AWS examples are included in the infra ag
 - OpenTelemetry observability patterns
 - Frontend design conventions (stack, tokens, component scope)
 - Visual automation rules (Playwright thresholds, E2E coverage targets)
+- UX journey rules (impact classification, friction budget defaults, hard-failure list, score weights)
 - Session memory protocol (Napkin write/read boundaries)
 - Research extraction rules (Firecrawl limits, domain allow/block lists)
 

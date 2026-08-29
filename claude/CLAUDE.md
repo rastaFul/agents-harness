@@ -18,6 +18,7 @@ Launch with: `claude --agent harness-infra` or `claude --agent harness-dev`
 - `task-executor` — Implements individual tasks with TDD and gates
 - `infra-analyzer` — Read-only infrastructure analysis
 - `code-analyzer` — Read-only code analysis
+- `ux-journey-judge` — Independent, browser-only goal-completion/usability evaluation for significant UI changes (`harness-dev` only, never `harness-infra`)
 
 ## `.specs/` Location — MANDATORY, resolve every session before writing anything
 
@@ -76,6 +77,7 @@ Configurable conventions in `steering/`. Edit to match your project:
 - `visual-automation.md` — Playwright MCP thresholds and E2E scope
 - `session-memory.md` — Napkin protocol and entry boundaries
 - `research-extraction.md` — Firecrawl limits, allowed/blocked domains
+- `ux-journey.md` — Classification (TRIVIAL/SIGNIFICANT), friction budget defaults, hard-failure list, score weights
 - Others: error-handling, api-rest, resilience, security, observability
 
 ## Gate E2E — Playwright MCP (OBRIGATÓRIO)
@@ -115,12 +117,31 @@ Sobe um browser real (Chromium headless) via Playwright MCP e navega pelas funci
 
 **Referência:** `steering/visual-automation.md`
 
+## Gate UX Journey — ux-journey-judge (OBRIGATÓRIO para mudanças SIGNIFICANT)
+
+Responde uma pergunta diferente do gate acima: não "a interface funciona tecnicamente" (Playwright), mas **"um usuário que nunca viu a implementação consegue descobrir sozinho como atingir seu objetivo?"**
+
+**Quando é obrigatório:** toda mudança de UI classificada SIGNIFICANT em `steering/ux-journey.md` (nova tela/rota, novo formulário, mudança de navegação/onboarding, ação que muda estado que o usuário precisa entender). Mudanças TRIVIAL (cor, spacing, copy em tela existente) não passam por este gate.
+
+**Fluxo:**
+```
+journey.md (antes da implementação, aprovado junto com o spec)
+  → implementação → Playwright gate PASS
+  → ux-journey-judge (Task, brief extraído via extract-journey-brief.sh — SEM happy path)
+  → PASS obrigatório antes de DONE
+```
+
+O avaliador (`ux-journey-judge`) é um sub-agente independente: recebe apenas ator, objetivo, estado inicial, entry points e critérios de sucesso — nunca o caminho de implementação, rotas ou seletores. Read-only em código; interage só via browser real. `goal_completion < 1.0` ou qualquer hard failure = FAIL, mesmo com score agregado alto.
+
+**Referência completa:** `skills/ux-journey/SKILL.md` e `steering/ux-journey.md`.
+
 ## Frontend Skills
 
 When working on UI tasks, these additional skills activate automatically:
 
 - **interface-design** — Reads/writes `.interface-design/system.md` to maintain design token consistency across sessions. Read before any component generation.
 - **playwright-mcp** — E2E and visual regression gate via Playwright MCP server. Mandatory gate for all tasks with visual output. Protocol above applies.
+- **ux-journey** — Goal-completion/usability gate for SIGNIFICANT UI changes, independent from the functional E2E gate above. See "Gate UX Journey" above.
 - **napkin** — Tactical session memory in `.claude/napkin.md`. Read at session start; write on corrections and pattern discoveries.
 - **firecrawl** — Web scraping for external design references and research. Use when WebSearch/WebFetch is insufficient.
 
