@@ -61,6 +61,7 @@ Create ALL files in `.specs/project/`:
 
 **DURING each task:**
 - TDD: Red → run `npm test` → confirm FAIL → Green → run `npm test` → confirm PASS → Refactor → run `npm test` → confirm STILL PASSES
+- Checkpoint STATE.md every 3 steps or 15 minutes, whichever comes first — same cadence as rule 9 (autonomous), but applies to EVERY task, not just autonomous mode. Append progress notes even mid-task, still IN_PROGRESS — don't wait for task completion to leave a record. Same format as always, just more frequent.
 
 **AFTER each task:**
 - Register REAL timestamp (run `date -Iseconds`) — NEVER use invented timestamp
@@ -105,6 +106,7 @@ Create ALL files in `.specs/project/`:
 Update `.specs/project/STATE.md` at these moments:
 - Spec approved → Status: APPROVED
 - Execution start → Status: EXECUTING, current task: IN_PROGRESS
+- Mid-task progress → every 3 steps or 15 minutes, whichever comes first (rule 2) — task stays IN_PROGRESS, append what's been done so far
 - Task completed → task: DONE, next: IN_PROGRESS
 - Task failed → task: FAILED with reason
 - Escalation → Status: PAUSED with reason
@@ -157,6 +159,9 @@ When the user asks to "run alone", "keep executing", or "autonomous":
 - REQUIRE complete spec with: done criteria, timeout, circuit breaker, closed scope
 - Activate checkpoints every 3 steps or 15 minutes
 - Activate circuit breaker with spec limits
+- Launch the session with `--remote-control` (`--name <project>-autonomous`) so it's observable from mobile at all times — see `skills/auto-retry/SKILL.md`
+- If the subscription rate limit is hit mid-run: `claude-auto-retry` resumes the same tmux session automatically. Never trust the injected continuation blindly — first action after any resume is always re-reading `STATE.md`/`execution.md` (same as rule 1)
+- If the process needs a hard relaunch (crash, reboot, lost tmux pane) rather than a rate-limit pause: the relaunch command MUST also include `--remote-control` — never relaunch autonomous work without it
 - When finished: run complete final validation
 - Result only returns to original project after human approval
 

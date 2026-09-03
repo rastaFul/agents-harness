@@ -100,6 +100,43 @@ install_playwright_mcp() {
 
 install_playwright_mcp
 
+# Install claude-auto-retry (resume autonomous sessions after subscription rate limit)
+install_claude_auto_retry() {
+  if command -v claude-auto-retry &>/dev/null; then
+    echo "✅ claude-auto-retry already installed"
+  else
+    echo "📦 Installing claude-auto-retry..."
+    if ! npm install -g claude-auto-retry &>/dev/null; then
+      echo "⚠️  claude-auto-retry install failed — autonomous rate-limit resume unavailable"
+      return
+    fi
+    if command -v tmux &>/dev/null || { echo "📦 tmux missing — install manually (apt/brew install tmux) before using autonomous mode"; }; then
+      :
+    fi
+    claude-auto-retry install &>/dev/null \
+      && echo "✅ claude-auto-retry shell wrapper installed (restart shell or source rc file)" \
+      || echo "⚠️  claude-auto-retry install step failed — run manually: claude-auto-retry install"
+  fi
+
+  # Config: force re-grounding via STATE.md on resume instead of a blind "continue"
+  local CFG="$HOME/.claude-auto-retry.json"
+  if [ ! -f "$CFG" ]; then
+    cat > "$CFG" <<'JSON'
+{
+  "retryMessage": "Rate limit reset. Re-read .specs/project/STATE.md and .specs/audit/execution.md before continuing, then resume from the last checkpoint.",
+  "maxRetries": 5,
+  "pollIntervalSeconds": 10,
+  "marginSeconds": 90
+}
+JSON
+    echo "✅ ~/.claude-auto-retry.json written (retryMessage forces STATE.md re-read)"
+  else
+    echo "ℹ️  ~/.claude-auto-retry.json already exists — not overwriting"
+  fi
+}
+
+install_claude_auto_retry
+
 echo ""
 echo "✅ Installed successfully!"
 echo ""
@@ -111,3 +148,6 @@ echo ""
 echo "Optional: Start sandbox for SonarQube and isolated execution:"
 echo "  cd $(dirname "$SCRIPT_DIR")/docker"
 echo "  ./sandbox-run.sh $TARGET"
+echo ""
+echo "Autonomous mode: always launch with --remote-control, e.g.:"
+echo "  claude --agent harness-infra --remote-control --name $(basename "$TARGET")-autonomous"

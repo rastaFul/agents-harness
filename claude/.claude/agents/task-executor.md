@@ -64,5 +64,8 @@ After each task, append to `.specs/audit/execution.md`:
 - Status: DONE|FAILED
 ```
 
+### 5b. Mid-task checkpoint
+If the task spans multiple RED→GREEN→REFACTOR cycles or takes longer than ~15 minutes: append a short progress note to `.specs/project/STATE.md` after each cycle (or every 3 steps, whichever first) — same cadence the orchestrator uses. Not the full Task Result block, just: what's done so far, still IN_PROGRESS. Losing this mid-task record if execution gets cut off is exactly what this prevents.
+
 ### 6. Do not decide
 If you find ambiguity or need a decision → return BLOCKED. The orchestrator decides.

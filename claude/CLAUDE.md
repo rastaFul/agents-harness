@@ -150,6 +150,7 @@ When working on UI tasks, these additional skills activate automatically:
 - `snip` — CLI proxy ativo via PreToolUse hook. Filtra saída de npm/npx/git/jest/tsc antes de chegar ao modelo. Ver `skills/snip/SKILL.md`. Checar ganhos: `snip gain`.
 - `caveman` — Estilo de comunicação token-eficiente (`skills/caveman/SKILL.md`)
 - `playwright-mcp` — Gate E2E via browser real (`skills/playwright-mcp/SKILL.md`)
+- `auto-retry` — Resume automático de sessão `autonomous` após rate limit da assinatura (5h/semanal) + `--remote-control` obrigatório pra acompanhamento via mobile. Ver `skills/auto-retry/SKILL.md`. Status: `claude-auto-retry status`.
 
 ## Token Efficiency (Caveman Mode)
 
