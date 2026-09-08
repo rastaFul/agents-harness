@@ -201,6 +201,15 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      # BUG FOUND AND FIXED via a real GitHub Actions run (5th real bug this
+      # pass): `github.repository_owner` preserves the account's actual
+      # casing ("rastaFul"), but Docker/GHCR repository names MUST be
+      # lowercase — buildx rejected the tag outright ("repository name must
+      # be lowercase"). The GitHub Actions expression language has no
+      # built-in lower-case function, so this needs a real shell step.
+      - name: Compute lowercase image name (GHCR requires lowercase)
+        id: image
+        run: echo "owner=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
       - name: Build and push multi-arch sandbox image
         uses: docker/build-push-action@v6
         with:
@@ -209,5 +218,5 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/agents-harness-sandbox:latest
-            ghcr.io/${{ github.repository_owner }}/agents-harness-sandbox:${{ github.sha }}
+            ghcr.io/${{ steps.image.outputs.owner }}/agents-harness-sandbox:latest
+            ghcr.io/${{ steps.image.outputs.owner }}/agents-harness-sandbox:${{ github.sha }}
