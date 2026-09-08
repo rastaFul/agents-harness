@@ -1,8 +1,9 @@
 # STATE
 
-Status: COMPLETED (Task 7) — awaiting human approval to commit+push per rule 9 (this response will attempt the commit+sync the user explicitly asked for; push itself still requires separate explicit confirmation since none was given for `git push`)
-Current: Task 7 (QUESTIONS.pt-BR.md rollout, under SPEC.md "Gate Hardening") — DONE. All 20 answered items executed, verified externally (not self-declared), 2 additional real bugs found+fixed during verification. Full rebuild of docker/Dockerfile.sandbox (pins + arm64) succeeded (REAL_EXIT=0) and all changed/pinned tools were functionally re-verified. Committing now per explicit instruction; sync of harness-infra + harness-dev (and their skills/steering dependencies) to ~/.claude is the closing step.
+Status: COMPLETED (Task 7). Committed (`3ab7142`, local `main`) — NOT pushed (only commit+sync were explicitly requested, push needs separate confirmation). Synced to `~/.claude` (global), diff-verified identical after copy.
+Current: Task 7 (QUESTIONS.pt-BR.md rollout, under SPEC.md "Gate Hardening") — DONE end to end. All 20 answered items executed and externally verified, 2 additional real bugs found+fixed during that verification (xargs empty-stdin crash, Polaris/kube-linter stderr-into-JSON corruption). Full rebuild of docker/Dockerfile.sandbox (pins + arm64) succeeded (REAL_EXIT=0), all 14 arch-mapped tools + Polaris/kube-linter functionally re-verified against real fixtures. Commit created covering the ENTIRE Gate Hardening initiative (2026-09-02 through today — nothing had ever been committed before this, per the working-tree state at session start). 13 files synced to `~/.claude/{agents,skills,templates}` (11 modified this task + harness-dev.md; harness-infra.md was already in sync from a prior session, confirmed identical, not touched).
 Mode: interactive.
+Next: none pending from this task. Open follow-ups (not blocking): rollout to product repos (QUESTIONS.md #18, deliberately out of scope), actually running the branch-protection/INFRACOST_API_KEY runbooks against real repos (deliberately not auto-applied), `git push` (needs explicit confirmation).
 
 ## Task 7 — QUESTIONS.pt-BR.md answers rollout (IN_PROGRESS)
 Scope (from user's answers, see QUESTIONS.pt-BR.md for exact wording):
