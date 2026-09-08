@@ -71,21 +71,38 @@ jobs:
         with: {name: harness-sandbox-image, path: /tmp}
       - if: hashFiles('package.json') != ''
         run: docker load -i /tmp/harness-sandbox.tar
+      # BUG FOUND AND FIXED via a real GitHub Actions run (3rd real bug this
+      # pass — see the hashFiles/.harness-sandbox fixes above/in git log):
+      # the image's ENTRYPOINT is already `["/bin/bash"]`, so every
+      # `docker run ... harness-sandbox:ci bash <script>` line below used to
+      # ACTUALLY invoke `/bin/bash bash <script> <args>` — bash then treats
+      # its first argument ("bash", no slash) as the script to run, which
+      # per bash's own semantics for a slash-less script name means IT
+      # SEARCHES $PATH, finds `/bin/bash` itself, and fails with
+      # "cannot execute binary file" trying to read the bash ELF binary as
+      # a text script. Invisible until today's real CI run because local
+      # usage (`sandbox-run.sh`) never passes a command at all — it drops
+      # into an interactive shell via ENTRYPOINT alone, so nobody ever
+      # exercised this exact one-shot invocation form before. Fixed by
+      # dropping the redundant leading `bash` — ENTRYPOINT already provides
+      # it, so `docker run ... harness-sandbox:ci skills/....sh .` and
+      # `docker run ... harness-sandbox:ci -c "compound && commands"` are
+      # both correct as-is once the doubled `bash` is removed.
       - name: Run the SAME script an agent runs locally (code-gates final)
         if: hashFiles('package.json') != ''
         run: |
           docker run --rm -v "$PWD:/workspace" -w /workspace harness-sandbox:ci \
-            bash skills/code-gates/scripts/run-final.sh .
+            skills/code-gates/scripts/run-final.sh .
       - name: Architecture conformance (dependency-cruiser)
         if: hashFiles('package.json') != ''
         run: |
           docker run --rm -v "$PWD:/workspace" -w /workspace harness-sandbox:ci \
-            bash skills/code-gates/scripts/run-architecture-gate.sh . || true
+            skills/code-gates/scripts/run-architecture-gate.sh . || true
       - name: Duplication/complexity
         if: hashFiles('package.json') != ''
         run: |
           docker run --rm -v "$PWD:/workspace" -w /workspace harness-sandbox:ci \
-            bash skills/code-gates/scripts/run-quality-extra.sh . || true
+            skills/code-gates/scripts/run-quality-extra.sh . || true
 
   security-gates:
     needs: build-sandbox
@@ -98,12 +115,12 @@ jobs:
       - name: Run the SAME security gate script used locally
         run: |
           docker run --rm -v "$PWD:/workspace" -w /workspace harness-sandbox:ci \
-            bash skills/security-gates/scripts/run-security-gates.sh .
+            skills/security-gates/scripts/run-security-gates.sh .
       - name: Full SAST + SBOM (final gate — slower, PR only)
         if: github.event_name == 'pull_request'
         run: |
           docker run --rm -v "$PWD:/workspace" -w /workspace harness-sandbox:ci \
-            bash skills/security-gates/scripts/run-security-final.sh .
+            skills/security-gates/scripts/run-security-final.sh .
 
   infra-gates:
     needs: build-sandbox
@@ -120,24 +137,24 @@ jobs:
         if: hashFiles('**/*.tf') != ''
         run: |
           docker run --rm -v "$PWD:/workspace" -w /workspace harness-sandbox:ci \
-            bash -c "terraform validate && tfsec . && checkov -d ."
+            -c "terraform validate && tfsec . && checkov -d ."
       - name: Infra quality gates (tflint, kubeconform, pluto)
         if: hashFiles('**/*.tf') != ''
         run: |
           docker run --rm -v "$PWD:/workspace" -w /workspace harness-sandbox:ci \
-            bash skills/infra-quality-gates/scripts/run-infra-quality.sh . || true
+            skills/infra-quality-gates/scripts/run-infra-quality.sh . || true
       - name: Policy gates (OPA/Conftest — house rules from policies.md)
         if: hashFiles('**/*.tf') != ''
         run: |
           docker run --rm -v "$PWD:/workspace" -w /workspace harness-sandbox:ci \
-            bash -c "terraform plan -out=plan.out && terraform show -json plan.out > plan.json && bash skills/policy-gates/scripts/run-policy-gate.sh plan.json"
+            -c "terraform plan -out=plan.out && terraform show -json plan.out > plan.json && bash skills/policy-gates/scripts/run-policy-gate.sh plan.json"
       - name: Cost delta (Infracost — reports only, no threshold set yet)
         if: hashFiles('**/*.tf') != ''
         env:
           INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY }}  # see docs/runbooks/infracost-api-key.md — secret not yet provisioned
         run: |
           docker run --rm -e INFRACOST_API_KEY -v "$PWD:/workspace" -w /workspace harness-sandbox:ci \
-            bash skills/cost-gates/scripts/run-cost-gate.sh . || true
+            skills/cost-gates/scripts/run-cost-gate.sh . || true
 
   perf-a11y-gates:
     needs: build-sandbox
