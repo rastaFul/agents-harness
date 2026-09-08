@@ -35,3 +35,113 @@ Files changed:
 - claude/.claude/agents/harness-infra.md
 - claude/.claude/agents/harness-dev.md
 - claude/.claude/agents/task-executor.md
+
+## Task 4: security-gates skill (gitleaks, semgrep, trivy fs/config, osv-scanner, syft+grype, kube-bench doc) — 2026-09-03T12:26:14-03:00
+
+- bash -n run-security-gates.sh: PASS
+- bash -n run-security-final.sh: PASS
+- Functional smoke test (mocked tool binaries in PATH, all 6 tools + SKIPPED path): PASS — correct status/severity aggregation, correct overall PASS/FAIL, SKIPPED does not fail overall, mock findings correctly surfaced as FAIL
+- Dockerfile.sandbox read (docker/Dockerfile.sandbox, not claude/docker/): confirmed gitleaks, semgrep, osv-scanner, syft, grype, kube-bench NOT installed; trivy already present and reused as-is
+- Status: DONE (scripts + SKILL.md only — Dockerfile.sandbox intentionally not edited, install commands reported to requester)
+
+Files changed:
+- claude/skills/security-gates/SKILL.md (new)
+- claude/skills/security-gates/scripts/run-security-gates.sh (new)
+- claude/skills/security-gates/scripts/run-security-final.sh (new)
+
+## Task 5: docker/Dockerfile.sandbox — full gate-hardening build + 10 real bug fixes — 2026-09-03
+
+- Independent re-verification of all sub-agent-delivered scripts (bash -n on 6 files not previously checked by me directly): PASS
+- Independent re-verification of dev-quality templates (json.tool x2, node -c x3, bash -n x3): PASS
+- docker build (Dockerfile.sandbox, full image, ~20 tools): attempts 1-9 FAILED (10 distinct real bugs — see RESULT.md for full list: apk terraform, npm engine, tfsec x2, kube-score, infracost repo, polaris/pluto filenames, helm openssl, unzip, curl -f, gcompat), attempt 10: PASS (REAL_EXIT=0, marker-verified each time, not trusted from task-notification alone — one notification was confirmed WRONG, see RESULT.md)
+- Functional verification (second throwaway build running every tool's --version as a real RUN step, not just checking files exist): 22/23 tools PASS, 1 pre-existing tool (sonar-scanner) FAIL — documented not fixed, scope decision (QUESTIONS.md #20)
+- Rego syntax: opa check via docker (opa not installed locally) — PASS after fixing missing if/contains keywords
+- yamllint on .github/workflows/gates.yml: PASS after fixing spacing
+- install.sh: bash -n PASS
+- Status: DONE (9 real, verified bugs fixed; 1 real, verified bug found and documented as deliberately not fixed)
+
+Files changed:
+- docker/Dockerfile.sandbox (extensively — see RESULT.md for the 10-bug list)
+- .github/workflows/gates.yml (new)
+- claude/install.sh (further edits: sandbox docker copy, CI workflow copy, lighthouse/axe install)
+- claude/.claude/agents/harness-infra.md (rule 3 extended with 5 new gate categories)
+- claude/skills/policy-gates/ (new: SKILL.md, policies/terraform.rego, policies/kubernetes.rego, scripts/run-policy-gate.sh)
+- claude/skills/cost-gates/ (new: SKILL.md, scripts/run-cost-gate.sh)
+- claude/skills/perf-a11y-gates/ (new: SKILL.md, scripts/run-lighthouse.sh, scripts/axe-snippet.md)
+- RESULT.md, QUESTIONS.md (new, repo root)
+- .specs/project/SPEC.md, STATE.md, DECISIONS.md
+
+## Task: Phase 3 — dev quality gates (dependency-cruiser, sonarjs, jscpd, Stryker, husky) — 2026-09-03T12:28:49-03:00
+- bash -n on run-architecture-gate.sh, run-quality-extra.sh, run-mutation.sh, templates/dev-quality/husky/setup-husky.sh, install.sh: PASS (5/5)
+- node -c on .dependency-cruiser.cjs, commitlint.config.cjs, lint-staged.config.cjs: PASS (3/3)
+- python3 -m json.tool on .jscpd.json, stryker.conf.json: PASS (2/2)
+- Smoke test: all 3 new gate scripts run against an empty scratch dir (no configs present) — graceful SKIPPED JSON, no crash under set -euo pipefail, output re-validated with json.tool: PASS (3/3)
+- No mutation-score threshold invented (stryker.conf.json thresholds.break=null, tool's own scaffold default); jscpd .jscpd.json ships with no "threshold" key (tool default = report only) — both flagged as open questions, not decided here, per SPEC.md constraint (use tool defaults, do not invent a business threshold)
+- TDD: N/A (bash/config tooling, not application code — verification via bash -n / node -c / json.tool / smoke run per rule 3, not Jest)
+- Status: DONE
+
+## Task: Phase 4 — infra quality gates (tflint, terraform-docs, Polaris, pluto, kubeconform, terratest, helm-unittest, kube-linter fix) — 2026-09-03T12:29:xx-03:00
+(Logged by orchestrator on this sub-agent's behalf — its own report did not append here.)
+- bash -n on run-infra-quality.sh, run-infra-quality-final.sh: PASS
+- Live smoke run (empty dir, then dir with a .tf module + README) exercising every JSON-building branch, not just syntax: PASS per sub-agent's own report
+- Found: kube-linter cited in harness-infra.md rule 3 since before this initiative, never installed — closed
+- Found: Helm and Go toolchain completely absent from Dockerfile.sandbox (helm lint/template already cited as gates with no working binary) — flagged, fixed centrally in Task 5
+- terratest/helm-unittest documented as per-project test-authoring patterns (need real test files, Go/helm toolchain) rather than a fake generic script — sub-agent's own judgment call
+- Status: DONE
+
+Files changed:
+- claude/skills/infra-quality-gates/SKILL.md (new)
+- claude/skills/infra-quality-gates/scripts/run-infra-quality.sh (new)
+- claude/skills/infra-quality-gates/scripts/run-infra-quality-final.sh (new)
+
+## Task 6: fix sonar-scanner Alpine/glibc gap (QUESTIONS.md #20) — 2026-09-04
+
+Root cause confirmed via WebSearch + WebFetch of upstream `sonar-scanner-cli` launcher script source (not guessed): the bundled `jre/` inside the CLI distribution is glibc-linked; the launcher script sets `use_embedded_jre=true` by default, which unconditionally exports `JAVA_HOME="$sonar_scanner_home/jre"`, overriding any other JAVA_HOME. `gcompat` (sufficient for the much simpler static `infracost` binary) is not a full glibc and cannot run a JVM. Documented SonarSource-community fix applied: disable the embedded JRE (`sed -i 's/use_embedded_jre=true/use_embedded_jre=false/'` on the installed launcher) and install a real musl-native JRE from Alpine's own apk repo (`openjdk17-jre-headless`) instead — scoped to sonar-scanner only, no base-image swap or image-wide glibc shim, since nothing else in this image needs a JVM. Bundled `jre/` directory removed post-install to avoid shipping ~185MB of now-unused glibc binaries.
+
+- hadolint (docker run --rm -i hadolint/hadolint < Dockerfile.sandbox), before AND after edit: PASS, 0 findings both times
+- docker build --no-cache -f docker/Dockerfile.sandbox docker/: PASS (REAL_EXIT=0, marker-verified in log file, not trusted from notification alone)
+- Functional verification (not just "file exists" — actual execution, same discipline as Task 5): throwaway image built FROM the new sandbox image running `java -version` and `sonar-scanner --version` as real RUN steps — PASS. Output confirms `sonar-scanner --version` now runs to completion and reports "Java 17.0.20 Alpine (64-bit)" — i.e. using the real Alpine JRE, not the removed bundled glibc one. REAL_EXIT=0, marker-verified.
+- Test images cleaned up after verification (javacheck:test, sonarverify:test, sonarverify:test2, agents-harness-sandbox:sonar-fix)
+- QUESTIONS.md #20 resolved (moved fix in, no longer open)
+- Status: DONE — 23/23 gate tools in Dockerfile.sandbox now functionally verified (was 22/23 after the original Gate Hardening pass)
+
+Files changed:
+- docker/Dockerfile.sandbox
+
+## Task 7: QUESTIONS.pt-BR.md rollout (20/20 items) — 2026-09-08T09:24:18-03:00
+
+- bash -n on all 8 changed shell scripts (cost-gates, perf-a11y-gates, code-gates run-mutation/run-final, security-gates x2, infra-quality-gates run-infra-quality-final, install.sh): PASS
+- JSON validity (.jscpd.json, stryker.conf.json, renovate.json): PASS
+- yamllint (.github/workflows/gates.yml): PASS
+- hadolint (docker/Dockerfile.sandbox, via `docker run hadolint/hadolint`): PASS (0 findings) — control test with a deliberately-bad Dockerfile confirmed hadolint capture actually works in this sandbox (not a false-negative empty result)
+- docker build --no-cache (full sandbox rebuild, pins + arm64 mapping): PASS (REAL_EXIT=0, marker-checked, not notification-trusted)
+- Functional verification (real --version/version execution, not file presence) of all 14 arch-mapped tools on amd64 host: terraform, tfsec, kube-score, gitleaks, osv-scanner, kube-bench, terraform-docs, polaris, pluto, kubeconform, kube-linter, opa, conftest, sonar-scanner — all PASS
+- terraform-docs --output-check: real fixture test, both directions (PASS when current, FAIL exit 1 when stale) — PASS
+- Polaris JSON schema: real fixture confirmed NO top-level DangerResultCount/WarningResultCount (original guess wrong) — parser rewritten to walk Results[].PodResult(.ContainerResults[]).Results{}, re-verified: danger=3, warning=14 on fixture — PASS
+- kube-linter real fixture: reports=5 after stderr/stdout fix — PASS
+- 2 additional real bugs found+fixed during this verification (not guessed, not part of the original ask): xargs empty-stdin crash (exit 123) in run-infra-quality-final.sh's terraform-docs module-discovery; Polaris+kube-linter stderr merged into stdout corrupting JSON parsing in the same script. Both reproduced before fixing and re-verified after.
+- Proactively checked tflint/kubeconform/pluto (run-infra-quality.sh) for the same stderr/JSON-corruption pattern: confirmed clean (empty stderr in practice), no fix needed.
+- Status: DONE
+
+Files changed:
+- claude/skills/cost-gates/scripts/run-cost-gate.sh
+- claude/skills/perf-a11y-gates/scripts/run-lighthouse.sh
+- claude/skills/perf-a11y-gates/SKILL.md
+- claude/templates/dev-quality/.jscpd.json
+- claude/templates/dev-quality/stryker.conf.json
+- claude/skills/code-gates/scripts/run-mutation.sh
+- claude/skills/code-gates/scripts/run-final.sh
+- claude/skills/security-gates/scripts/run-security-final.sh
+- claude/skills/security-gates/scripts/run-security-gates.sh
+- claude/skills/security-gates/SKILL.md
+- claude/skills/infra-quality-gates/scripts/run-infra-quality-final.sh
+- docker/Dockerfile.sandbox
+- .github/workflows/gates.yml
+- .github/CODEOWNERS (new)
+- claude/install.sh
+- claude/.claude/agents/harness-dev.md
+- renovate.json (new)
+- docs/runbooks/infracost-api-key.md (new)
+- docs/runbooks/branch-protection.md (new)
+- QUESTIONS.pt-BR.md (answers), QUESTIONS.md (mirrored resolution notes)
+- .specs/project/DECISIONS.md, .specs/project/STATE.md

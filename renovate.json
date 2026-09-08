@@ -1,0 +1,128 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "description": "DECIDED (QUESTIONS.pt-BR.md #12/#13, 2026-09): every pinned tool version ARG in docker/Dockerfile.sandbox gets a periodic, review-gated bump — never silent drift (that was the /latest/ problem for polaris/pluto/kubeconform/kube-linter) and never silent staleness (that was the risk for the other pinned ARGs). Renovate opens a PR per update; nothing auto-merges — 'sempre com revisão antes' per the user's own answer. Dependabot's built-in docker ecosystem only tracks FROM base images, not curl-installed binaries pinned via ARG, so this uses Renovate's regex/custom manager instead.",
+  "packageRules": [
+    {
+      "matchManagers": ["custom.regex"],
+      "automerge": false,
+      "labels": ["dockerfile-sandbox-version-bump"],
+      "prCreation": "immediate"
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Every ARG *_VERSION in docker/Dockerfile.sandbox, matched to its real upstream GitHub/HashiCorp/OPA/terraform-docs release source.",
+      "fileMatch": ["^docker/Dockerfile\\.sandbox$"],
+      "matchStrings": [
+        "ARG TERRAFORM_VERSION=(?<currentValue>[\\d.]+)"
+      ],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "hashicorp/terraform",
+      "extractVersionTemplate": "^v(?<version>.*)$"
+    },
+    {
+      "customType": "regex",
+      "fileMatch": ["^docker/Dockerfile\\.sandbox$"],
+      "matchStrings": ["ARG TFSEC_VERSION=v(?<currentValue>[\\d.]+)"],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "aquasecurity/tfsec"
+    },
+    {
+      "customType": "regex",
+      "fileMatch": ["^docker/Dockerfile\\.sandbox$"],
+      "matchStrings": ["ARG KUBE_SCORE_VERSION=(?<currentValue>[\\d.]+)"],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "zegl/kube-score",
+      "extractVersionTemplate": "^v(?<version>.*)$"
+    },
+    {
+      "customType": "regex",
+      "fileMatch": ["^docker/Dockerfile\\.sandbox$"],
+      "matchStrings": ["ARG GITLEAKS_VERSION=(?<currentValue>[\\d.]+)"],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "gitleaks/gitleaks",
+      "extractVersionTemplate": "^v(?<version>.*)$"
+    },
+    {
+      "customType": "regex",
+      "fileMatch": ["^docker/Dockerfile\\.sandbox$"],
+      "matchStrings": ["ARG OSV_SCANNER_VERSION=(?<currentValue>[\\d.]+)"],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "google/osv-scanner",
+      "extractVersionTemplate": "^v(?<version>.*)$"
+    },
+    {
+      "customType": "regex",
+      "fileMatch": ["^docker/Dockerfile\\.sandbox$"],
+      "matchStrings": ["ARG KUBE_BENCH_VERSION=(?<currentValue>[\\d.]+)"],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "aquasecurity/kube-bench",
+      "extractVersionTemplate": "^v(?<version>.*)$"
+    },
+    {
+      "customType": "regex",
+      "fileMatch": ["^docker/Dockerfile\\.sandbox$"],
+      "matchStrings": ["ARG TERRAFORM_DOCS_VERSION=(?<currentValue>[\\d.]+)"],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "terraform-docs/terraform-docs",
+      "extractVersionTemplate": "^v(?<version>.*)$"
+    },
+    {
+      "customType": "regex",
+      "fileMatch": ["^docker/Dockerfile\\.sandbox$"],
+      "matchStrings": ["ARG POLARIS_VERSION=(?<currentValue>[\\d.]+)"],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "FairwindsOps/polaris",
+      "extractVersionTemplate": "^v(?<version>.*)$"
+    },
+    {
+      "customType": "regex",
+      "fileMatch": ["^docker/Dockerfile\\.sandbox$"],
+      "matchStrings": ["ARG PLUTO_VERSION=(?<currentValue>[\\d.]+)"],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "FairwindsOps/pluto",
+      "extractVersionTemplate": "^v(?<version>.*)$"
+    },
+    {
+      "customType": "regex",
+      "fileMatch": ["^docker/Dockerfile\\.sandbox$"],
+      "matchStrings": ["ARG KUBECONFORM_VERSION=(?<currentValue>[\\d.]+)"],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "yannh/kubeconform",
+      "extractVersionTemplate": "^v(?<version>.*)$"
+    },
+    {
+      "customType": "regex",
+      "fileMatch": ["^docker/Dockerfile\\.sandbox$"],
+      "matchStrings": ["ARG KUBE_LINTER_VERSION=(?<currentValue>[\\d.]+)"],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "stackrox/kube-linter",
+      "extractVersionTemplate": "^v(?<version>.*)$"
+    },
+    {
+      "customType": "regex",
+      "fileMatch": ["^docker/Dockerfile\\.sandbox$"],
+      "matchStrings": ["ARG OPA_VERSION=(?<currentValue>[\\d.]+)"],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "open-policy-agent/opa",
+      "extractVersionTemplate": "^v(?<version>.*)$"
+    },
+    {
+      "customType": "regex",
+      "fileMatch": ["^docker/Dockerfile\\.sandbox$"],
+      "matchStrings": ["ARG CONFTEST_VERSION=(?<currentValue>[\\d.]+)"],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "open-policy-agent/conftest",
+      "extractVersionTemplate": "^v(?<version>.*)$"
+    },
+    {
+      "customType": "regex",
+      "fileMatch": ["^docker/Dockerfile\\.sandbox$"],
+      "matchStrings": ["ARG SONAR_SCANNER_VERSION=(?<currentValue>[\\d.]+)"],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "SonarSource/sonar-scanner-cli"
+    }
+  ]
+}

@@ -26,6 +26,33 @@ cp -r "$SCRIPT_DIR/skills" "$TARGET/skills"
 # Copy steering
 cp -r "$SCRIPT_DIR/steering" "$TARGET/steering"
 
+# Copy dev-quality gate templates (dependency-cruiser, jscpd, Stryker,
+# commitlint, husky/lint-staged pre-commit setup). Files only — this does
+# NOT install devDependencies or run husky init, see printed instructions.
+if [ -d "$SCRIPT_DIR/templates" ]; then
+  cp -r "$SCRIPT_DIR/templates" "$TARGET/templates"
+fi
+
+# Copy sandbox docker files (needed by both local sandbox-run.sh AND
+# .github/workflows/gates.yml — same Dockerfile in both places is the
+# mechanism that keeps local gates and CI gates from drifting apart)
+REPO_ROOT="$(dirname "$SCRIPT_DIR")"
+mkdir -p "$TARGET/.harness-sandbox"
+cp -r "$REPO_ROOT/docker" "$TARGET/.harness-sandbox/docker"
+
+# Copy CI workflow template
+mkdir -p "$TARGET/.github/workflows"
+cp "$REPO_ROOT/.github/workflows/gates.yml" "$TARGET/.github/workflows/gates.yml"
+echo "✅ CI workflow installed at .github/workflows/gates.yml (builds .harness-sandbox/docker/Dockerfile.sandbox — same image used locally)"
+
+# Copy CODEOWNERS (decided: single maintainer, always @rastaFul — QUESTIONS.pt-BR.md #11)
+if [ -f "$REPO_ROOT/.github/CODEOWNERS" ] && [ ! -f "$TARGET/.github/CODEOWNERS" ]; then
+  cp "$REPO_ROOT/.github/CODEOWNERS" "$TARGET/.github/CODEOWNERS"
+  echo "✅ .github/CODEOWNERS installed (owner: @rastaFul)"
+elif [ -f "$TARGET/.github/CODEOWNERS" ]; then
+  echo "ℹ️  $TARGET/.github/CODEOWNERS already exists — not overwriting"
+fi
+
 # Install snip (token filter for Claude Code)
 install_snip() {
   if command -v snip &>/dev/null; then
@@ -136,6 +163,60 @@ JSON
 }
 
 install_claude_auto_retry
+
+# Install Lighthouse CI (perf/a11y gate — reports, no threshold decided yet, see .specs/QUESTIONS.md)
+install_perf_a11y_tools() {
+  if command -v lhci &>/dev/null; then
+    echo "✅ @lhci/cli already installed"
+  else
+    echo "📦 Installing @lhci/cli globally..."
+    npm install -g @lhci/cli &>/dev/null \
+      && echo "✅ @lhci/cli installed" \
+      || echo "⚠️  @lhci/cli install failed — Lighthouse gate unavailable"
+  fi
+
+  if [ -f "$TARGET/package.json" ]; then
+    (cd "$TARGET" && npm install -D axe-playwright &>/dev/null) \
+      && echo "✅ axe-playwright added as devDependency (see skills/perf-a11y-gates/scripts/axe-snippet.md to wire it into your Playwright test)" \
+      || echo "⚠️  axe-playwright install failed — add manually: npm install -D axe-playwright"
+  else
+    echo "ℹ️  no package.json in $TARGET yet — skipping axe-playwright devDependency install, add later with: npm install -D axe-playwright"
+  fi
+}
+
+install_perf_a11y_tools
+
+# Dev-quality gate bundle (dependency-cruiser, sonarjs, jscpd, Stryker,
+# husky/lint-staged/commitlint) — DECIDED (QUESTIONS.pt-BR.md #17, 2026-09):
+# auto-install everywhere a package.json exists, same policy as
+# axe-playwright above. Previously document-only, a policy inconsistency
+# the user explicitly flagged and asked to resolve toward "always auto
+# install, since these are dependencies I always want as gates."
+install_dev_quality_bundle() {
+  if [ ! -f "$TARGET/package.json" ]; then
+    echo "ℹ️  no package.json in $TARGET yet — skipping dev-quality bundle install, add later with:"
+    echo "   npm install -D husky lint-staged @commitlint/cli @commitlint/config-conventional dependency-cruiser eslint-plugin-sonarjs jscpd @stryker-mutator/core @stryker-mutator/jest-runner"
+    return
+  fi
+
+  echo "📦 Installing dev-quality bundle devDependencies into $TARGET..."
+  if (cd "$TARGET" && npm install -D husky lint-staged @commitlint/cli @commitlint/config-conventional dependency-cruiser eslint-plugin-sonarjs jscpd @stryker-mutator/core @stryker-mutator/jest-runner &>/dev/null); then
+    echo "✅ dev-quality bundle devDependencies installed"
+  else
+    echo "⚠️  dev-quality bundle install failed — install manually: npm install -D husky lint-staged @commitlint/cli @commitlint/config-conventional dependency-cruiser eslint-plugin-sonarjs jscpd @stryker-mutator/core @stryker-mutator/jest-runner"
+    return
+  fi
+
+  if (cd "$TARGET" && bash "$TARGET/templates/dev-quality/husky/setup-husky.sh") &>/dev/null; then
+    echo "✅ husky hooks activated + dev-quality configs placed at project root"
+  else
+    echo "⚠️  husky setup failed — run manually: bash templates/dev-quality/husky/setup-husky.sh"
+  fi
+
+  echo "ℹ️  eslint-plugin-sonarjs installed but NOT auto-wired into your ESLint config (config shape varies too much per project) — add plugin+rules manually, see skills/code-gates/SKILL.md"
+}
+
+install_dev_quality_bundle
 
 echo ""
 echo "✅ Installed successfully!"

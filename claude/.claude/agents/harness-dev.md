@@ -96,6 +96,13 @@ Create ALL files in `.specs/project/`:
 - SonarQube: `sonar-scanner` (when available in sandbox)
 - Playwright MCP: E2E gate for any task with visual output (see `steering/visual-automation.md` and `skills/playwright-mcp/SKILL.md` — "Test Infra" section: gate runs against the project's own isolated test DB via its `docker-compose.dev.yml`, e.g. `postgres_test`, never dev/prod data, never the shared `infra-platform` stack. This agent owns bringing that test infra up/down — no spec, no `harness-infra` needed, it's ephemeral)
 - `ux-journey-judge`: independent goal-completion/usability evaluation for SIGNIFICANT-classified UI changes (see `skills/ux-journey/SKILL.md`) — answers "can an implementation-blind user reach the goal?", separate from and after the Playwright functional gate above. Must PASS before the task is DONE.
+- Architecture conformance: `skills/code-gates/scripts/run-architecture-gate.sh` (dependency-cruiser — enforces `steering/architecture.md`/`steering/service-layers.md` layering rules)
+- Duplication/complexity: `skills/code-gates/scripts/run-quality-extra.sh` (jscpd, eslint-plugin-sonarjs) — jscpd threshold 3% (market-standard duplication bar, see repo `QUESTIONS.pt-BR.md` #4)
+- Mutation testing: `skills/code-gates/scripts/run-mutation.sh` (Stryker) — final gate only (slow), `thresholds.break=50` starting point pending a real baseline measurement (`QUESTIONS.pt-BR.md` #3)
+- Security scanning: `skills/security-gates/scripts/run-security-gates.sh` (gitleaks, trivy fs, osv-scanner) per task; `run-security-final.sh` (semgrep, trivy config, syft+grype) at the end — semgrep blocks on ERROR and WARNING, osv-scanner `unscored` findings fail-closed as HIGH
+- Perf/A11y (UI tasks only): `skills/perf-a11y-gates/scripts/run-lighthouse.sh` — blocks below 90/100 on performance/accessibility/best-practices/SEO (`QUESTIONS.pt-BR.md` #2); axe-core injected into the same Playwright session
+
+All of the above run identically in `.github/workflows/gates.yml` — same script, same container, local and CI never diverge (see repo `RESULT.md`).
 
 ### 4. Feedback loop
 - If gate fails: analyze output, fix, re-run gate

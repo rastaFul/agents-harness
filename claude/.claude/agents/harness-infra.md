@@ -95,6 +95,12 @@ The agent does NOT validate itself. External tools validate:
 - Kubernetes: `kube-score`, `kube-linter`, `kubectl diff`
 - Helm: `helm lint`, `helm template`
 - Containers: `trivy`
+- Policy-as-code (this repo's own hard rules from `policies.md`, not general best-practice): `skills/policy-gates/scripts/run-policy-gate.sh` — run after `terraform plan`/`helm template`, before apply
+- Infra quality (not just security): `skills/infra-quality-gates/scripts/run-infra-quality.sh` (tflint, kubeconform, pluto) per task; `run-infra-quality-final.sh` (terraform-docs, Polaris, kube-linter) at the end
+- Security scanning: `skills/security-gates/scripts/run-security-gates.sh` (gitleaks, trivy fs, osv-scanner) per task; `run-security-final.sh` (semgrep, trivy config, syft+grype) at the end
+- Cost: `skills/cost-gates/scripts/run-cost-gate.sh` — reports delta, does not block yet (no threshold set, see repo `QUESTIONS.md`)
+
+All of the above run identically in `.github/workflows/gates.yml` — same script, same container, local and CI never diverge (see repo `RESULT.md`).
 
 ### 4. Feedback loop
 - If gate fails: analyze output, fix, re-run gate

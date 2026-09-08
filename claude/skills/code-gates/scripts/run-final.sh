@@ -1,20 +1,39 @@
 #!/bin/bash
-# Run ALL gates: tsc, eslint, jest, coverage, audit, sonar. Returns JSON.
+# Run ALL gates: tsc, eslint, jest, coverage, audit, sonar, architecture
+# conformance, duplication/complexity, mutation testing. Returns JSON.
+#
+# DECIDED (QUESTIONS.pt-BR.md #19, 2026-09): wires in the 3 dev-quality
+# scripts that existed standalone but were never called from here
+# (run-architecture-gate.sh, run-quality-extra.sh, run-mutation.sh) — closes
+# the "written but orphaned" gap flagged in QUESTIONS.md. Mutation testing
+# (Stryker) is slow by design (re-runs the suite per surviving mutant) —
+# still run here rather than per-task, since this script itself is already
+# the "WHEN FINISHING all tasks" final gate, not the per-task one.
 set -euo pipefail
 DIR="${1:-.}"
 SKILL_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+CODE_GATES_SCRIPTS="$SKILL_DIR/scripts"
 
 # Run step gates + checkpoint gates
 STEP=$(bash "$SKILL_DIR/scripts/run-gates.sh" "$DIR" 2>/dev/null)
 CHECKPOINT=$(bash "$SKILL_DIR/scripts/run-checkpoint.sh" "$DIR" 2>/dev/null)
+ARCHITECTURE=$(bash "$CODE_GATES_SCRIPTS/run-architecture-gate.sh" "$DIR" 2>/dev/null)
+QUALITY_EXTRA=$(bash "$CODE_GATES_SCRIPTS/run-quality-extra.sh" "$DIR" 2>/dev/null)
+MUTATION=$(bash "$CODE_GATES_SCRIPTS/run-mutation.sh" "$DIR" 2>/dev/null)
 
 # Merge results
 RESULT=$(python3 -c "
 import json, sys
 step = json.loads('''$STEP''')
 checkpoint = json.loads('''$CHECKPOINT''')
+architecture = json.loads('''$ARCHITECTURE''')
+quality_extra = json.loads('''$QUALITY_EXTRA''')
+mutation = json.loads('''$MUTATION''')
 merged = step
 merged['gates'].update(checkpoint['gates'])
+merged['gates'].update(architecture['gates'])
+merged['gates'].update(quality_extra['gates'])
+merged['gates'].update(mutation['gates'])
 
 # Sonar
 sonar = {'status': 'SKIPPED', 'bugs': 0, 'vulnerabilities': 0, 'smells': 0, 'coverage': 0, 'duplications': 0}
