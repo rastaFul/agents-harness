@@ -32,3 +32,20 @@ Overall: all 5 phases DONE or explicitly BLOCKED with reason in QUESTIONS.md. Fi
 - Delegation: task-executor for implementation bundles that are independent and parallelizable; orchestrator (this session) does the shared/central files (Dockerfile.sandbox, install.sh, CI workflow, OPA policy translation) to avoid merge conflicts between parallel writers.
 - No decision-under-uncertainty: registry names, CI secrets, thresholds not already agreed, branch-protection config, and anything touching product repos → QUESTIONS.md, never assumed.
 - Human approval gate: per rule 9, result does not get committed/pushed without explicit human approval after reviewing RESULT.md.
+
+## Task 10 — Autonomous gate-clearing loop (2026-09-09T07:46:03-03:00)
+User: "aplique [reusable-ci.yml fix] e entre em modo autonomo e em loop, até zerar as vulnerabilidades ou gates barrados que encontrar."
+
+**Caveat, same as every prior "autonomous" request this initiative**: cannot self-relaunch as a separate `claude --agent harness-infra --remote-control` process from inside a running interactive session. Applying rule 9's spirit within this session instead (closed scope, checkpoints, circuit breaker) rather than claiming full compliance.
+
+**Closed scope (infra/security gate findings only, across the 6 repos this initiative already touches: agents-harness, artists-booking, microgrow, rastafinancas, vetcare, infra-platform):**
+- IN: real findings surfaced by each repo's `Harness Gates` CI (`gates.yml`) infra/security jobs — tfsec, checkov, OPA policy-gate, trivy, and any NEW harness-template bug the loop itself surfaces (same discipline as the rollout: fix centrally, propagate).
+- OUT: pre-existing application-level CI failures unrelated to security/infra (broken `npm install` in artists-booking, actual product lint/test/coverage debt) — that's `harness-dev`/product-backlog territory, not this orchestrator's scope, and fixing it blind risks breaking real app behavior.
+- OUT: anything requiring credentials this session doesn't have (OCI apply, `INFRACOST_API_KEY`, GitHub Pro/branch protection) — already-escalated items stay escalated, not re-attempted here.
+- OUT: production `terraform apply` — code-level Terraform fixes stay in scope (validated via `terraform validate`/`tfsec`/`checkov`), applying to live state does not (no credentials, same as the OCI fix already done).
+
+**Done criteria:** every repo's `Harness Gates` run is green, OR every remaining red job is classified as one of: FIXED (re-verified via a real subsequent run), BLOCKED (circuit breaker exhausted — 3 attempts on the same distinct finding — logged with reason), or OUT-OF-SCOPE (app-level, logged and left for `harness-dev`/product owner).
+
+**Circuit breaker:** 3 fix attempts per distinct finding before marking BLOCKED and moving to the next repo/finding — never loop indefinitely on one item.
+
+**Checkpoints:** STATE.md updated every 3 repos checked or 15 minutes, whichever first.
