@@ -10,6 +10,11 @@ Right now `.github/workflows/gates.yml` runs and reports pass/fail, but nothing 
 
 - `gh` CLI authenticated with admin rights on the target repo (`gh auth status` — this session's own token already has `repo` scope, sufficient for personal repos you own).
 - The repo must have run `.github/workflows/gates.yml` at least once on the target branch, so GitHub knows the check names to offer.
+- **Plan limitation confirmed live, 2026-09-08 (not assumed):** both the classic branch-protection API (`PUT .../branches/{branch}/protection`) and the newer rulesets API (`POST .../rulesets`) returned the same `403`: `"Upgrade to GitHub Pro or make this repository public to enable this feature."` — **private repos on a free personal GitHub plan cannot use branch protection or rulesets at all**, regardless of endpoint. This blocks `agents-harness` and every other private repo (artists-booking, microgrow, rastafinancas, vetcare, infra-platform) unless one of:
+  1. Upgrade the account to GitHub Pro (paid, unlocks this for all owned private repos), or
+  2. Make the specific repo public (free, but changes real visibility — a deliberate per-repo decision, not something to default into).
+
+  Neither was decided here — this runbook stops at "how to apply it once available," not "which of these two to choose." If/when one is chosen, the commands below work as documented.
 
 ## Steps (per repo)
 
@@ -23,6 +28,7 @@ gh api -X PUT "repos/$REPO/branches/$BRANCH/protection" \
   -f 'required_status_checks.contexts[]=dev-gates' \
   -f 'required_status_checks.contexts[]=security-gates' \
   -f 'required_status_checks.contexts[]=infra-gates' \
+  -f 'required_status_checks.contexts[]=perf-a11y-gates' \
   -f 'required_status_checks.contexts[]=policy-gate-status' \
   -f enforce_admins=true \
   -f required_pull_request_reviews.required_approving_review_count=0 \
@@ -33,7 +39,7 @@ gh api -X PUT "repos/$REPO/branches/$BRANCH/protection" \
 Notes:
 - `required_approving_review_count=0` — single-maintainer repos (CODEOWNERS is always `@rastaFul`, see `.github/CODEOWNERS`), so a human-approval-count requirement would just block yourself. `require_code_owner_reviews=true` still keeps the CODEOWNERS file meaningful for when/if that changes.
 - `enforce_admins=true` — applies the rule to the owner too, not just external contributors. Set `false` if you want an escape hatch for emergency pushes (weigh against the "checks exist but don't block" problem this is meant to solve).
-- Job names (`dev-gates`, `security-gates`, `infra-gates`, `policy-gate-status`) must match `.github/workflows/gates.yml` job `id`s exactly — some jobs (`dev-gates`, `infra-gates`) are conditional (`if: hashFiles(...)`) and won't report if the condition is false; GitHub treats a job that never ran as neither pass nor fail for a required check, which can block merges on repos that legitimately have no `package.json`/`*.tf`. Verify per-repo before enabling — remove a context from the list above if that repo will never have that job run.
+- Job names above are confirmed live against `agents-harness`'s first fully-green real run (`gh api repos/rastaFul/agents-harness/actions/runs/34292146125/jobs`, 2026-09-08) — not guessed. `build-sandbox` and `publish-image` deliberately excluded: `build-sandbox` is an implementation-detail dependency every other job already needs, and `publish-image` is a speed/reuse optimization (GHCR cache), not a required quality/security gate. `dev-gates`/`infra-gates`/`perf-a11y-gates` used to be JOB-level-conditional (`if: hashFiles(...)`) and could have stayed pending forever on repos missing the matching files — fixed (see git log, "hashFiles() not allowed in job-level if:") to use step-level guards instead, so these jobs now always report a real conclusion regardless of repo content. Still worth a quick check per-repo before enabling that all 5 job `id`s actually exist in whatever `gates.yml` version that repo has installed.
 
 ## Verify
 

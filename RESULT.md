@@ -76,7 +76,21 @@ Every "not yet done" / "explicitly NOT done" item above from the 2026-09-03 pass
 
 **23/23 gate tools remain functionally verified**, now additionally arm64-capable and re-verified post-rebuild on amd64. Docker rebuild: REAL_EXIT=0 (marker-checked).
 
+## Follow-up (2026-09-08, later same day) — first real GitHub Actions run: 5 more bugs, GHCR live, branch protection hits a real wall
+Pushed to `origin/main` for the first time ever, which meant `.github/workflows/gates.yml` executed on real GitHub Actions for the first time in this initiative's entire history. It took 5 more real, previously-invisible bugs (each found by reading actual failed-run logs, never guessed) before it went fully green:
+1. `hashFiles()` in a job-level `if:` (only legal at step level — actionlint-confirmed, yamllint can't check this)
+2. `.harness-sandbox/docker` missing in the template source repo itself (fixed with a symlink to `docker/`, not a copy)
+3. `ENTRYPOINT ["/bin/bash"]` + every `docker run ... bash <script>` call doubled up, so bash tried to execute itself as a script and failed with "cannot execute binary file" — reproduced and confirmed the fix with plain bash, no Docker needed
+4. `skills/` missing at repo root in the template source repo (same cause as #2, fixed with a second symlink to `claude/skills/`)
+5. GHCR rejecting the image tag because `github.repository_owner` preserves account casing and GHCR requires lowercase
+
+Final run (`34292146125`): **all 7 jobs green** — including `publish-image`, which genuinely pushed a multi-arch (amd64+arm64) image to GHCR, verified via the real manifest-list digest in the build log, not just a checkmark.
+
+**Branch protection hit a real, non-technical wall**: both the classic branch-protection API and the newer rulesets API return `403 Upgrade to GitHub Pro or make this repository public` for private repos on a free personal GitHub plan — confirmed live against `agents-harness`, not assumed. This blocks branch protection on every repo in scope until the user picks one of the two real options (paid upgrade, or making a repo public) — a business decision, not something this session decided unilaterally. `docs/runbooks/branch-protection.md` updated with this finding and the real, confirmed job-context names from the actual green run.
+
+Rollout to product repos and `INFRACOST_API_KEY` provisioning remain not started — the former needs explicit scoping (5 repos, each possibly in a different state), the latter needs the user's own account signup.
+
 ## Not yet done
-- Push — commit created this session per explicit instruction ("execute o que eu respondi... no final fazer o commit"); push to remote still needs separate explicit confirmation, none given yet.
-- Rollout to product repos (artists-booking, microgrow, rastafinancas, vetcare) and `infra-platform` itself — still deliberately out of scope (QUESTIONS.md #18).
-- Actually running the branch-protection/INFRACOST_API_KEY runbooks against real repos — documented, not executed (see runbooks for why).
+- Rollout to product repos (artists-booking, microgrow, rastafinancas, vetcare) and `infra-platform` itself — still deliberately out of scope pending user scoping (QUESTIONS.md #18).
+- `INFRACOST_API_KEY` — needs the user to sign up; runbook ready (`docs/runbooks/infracost-api-key.md`).
+- Branch protection — blocked on a GitHub Pro / public-repo decision (see above); runbook ready and updated (`docs/runbooks/branch-protection.md`).

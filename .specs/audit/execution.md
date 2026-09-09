@@ -145,3 +145,24 @@ Files changed:
 - docs/runbooks/branch-protection.md (new)
 - QUESTIONS.pt-BR.md (answers), QUESTIONS.md (mirrored resolution notes)
 - .specs/project/DECISIONS.md, .specs/project/STATE.md
+
+## Task 8: First real gates.yml run on GitHub Actions + branch-protection attempt — 2026-09-08T21:07:19-03:00
+
+- Pushed all local commits to origin/main for the first time (previously nothing had ever been pushed)
+- 5 real bugs found via actual GitHub Actions execution (not local checks), each fixed and re-verified via a subsequent real run:
+  1. hashFiles() at job-level `if:` (actionlint-confirmed) — 0 jobs scheduled, "workflow file issue"
+  2. `.harness-sandbox/docker` missing in template source repo — build-sandbox "path not found"
+  3. ENTRYPOINT-doubled `bash` in every `docker run` call — "cannot execute binary file", exit 126 (reproduced locally with plain bash, no Docker, to confirm root cause before fixing)
+  4. `skills/` missing at repo root in template source repo — "No such file or directory", exit 127
+  5. `github.repository_owner` casing rejected by GHCR (must be lowercase) — buildx "invalid tag"
+- Final run (id 34292146125): ALL 7 jobs PASS — build-sandbox, dev-gates, security-gates, infra-gates, perf-a11y-gates, policy-gate-status, publish-image. Verified via `gh api repos/.../actions/runs/{id}/jobs`, not the background-task notification.
+- GHCR image push verified via the actual build-push-action log content (manifest list digest, per-arch manifests + attestations, "pushing manifest ... done") — not just the job's green status.
+- Branch protection attempted against agents-harness (classic API + rulesets API): both returned real 403 "Upgrade to GitHub Pro or make this repository public" — genuine GitHub plan limitation for private repos on a free personal account, not a bug, not worked around. Documented in docs/runbooks/branch-protection.md with the confirmed real job-context names for whenever it becomes available.
+- Status: DONE (bugs found/fixed/verified); branch protection BLOCKED (external plan limitation, escalated to user — not a retry-3x-then-escalate case, it's a definitive 403 on two different endpoints); product-repo rollout and INFRACOST_API_KEY NOT STARTED (awaiting user scoping/action)
+
+Files changed:
+- .github/workflows/gates.yml (5 fixes)
+- .harness-sandbox/docker (new symlink)
+- skills (new symlink)
+- docs/runbooks/branch-protection.md (plan-limitation finding + confirmed job names)
+- .specs/project/DECISIONS.md, .specs/project/STATE.md
