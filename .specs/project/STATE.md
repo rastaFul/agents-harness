@@ -1,4 +1,10 @@
-# STATE
+# STATE (most recent status at top — see below for full history)
+
+Status: Task 9 DONE. Rollout to all 5 target repos complete: `.specs/features/harness-gates-rollout/spec.md` created in each, `install.sh` run, 11 real bugs found+fixed via live execution/CI (see DECISIONS.md "2026-09-09" and execution.md Task 9), fixes propagated everywhere + synced to `~/.claude`. **Final verified state (`gh api`, not notifications): 4/5 repos fully green** (artists-booking, microgrow, rastafinancas, vetcare). **infra-platform's `infra-gates` correctly fails** — 2 real checkov findings (CKV_OCI_4/CKV_OCI_5) against the live production OCI compute instance Terraform, deliberately not auto-fixed (real blast radius on running infra, needs its own spec/approval) — open, escalated to user.
+Mode: interactive.
+
+---
+
 
 Status: COMPLETED (Task 7) + Task 8 PARTIAL. Pushed to origin/main (5 more commits fixing real CI bugs, see Task 8 below) — gates.yml now fully green for the first time ever. Synced to `~/.claude` (global), diff-verified identical after copy.
 

@@ -166,3 +166,21 @@ Files changed:
 - skills (new symlink)
 - docs/runbooks/branch-protection.md (plan-limitation finding + confirmed job names)
 - .specs/project/DECISIONS.md, .specs/project/STATE.md
+
+## Task 9: Product-repo rollout + 11 real bugs found via live CI — 2026-09-09T06:50:48-03:00
+
+- Created `.specs/features/harness-gates-rollout/spec.md` in all 5 target repos (artists-booking, microgrow, rastafinancas, vetcare, infra-platform) before executing, per spec-driven principle
+- Ran `install.sh` against all 5, verified files/syntax/yamllint before each commit, staged ONLY harness-installation paths (never pre-existing unrelated WIP in each repo — verified via git status before each git add)
+- 11 real bugs found and fixed during rollout, all via genuine execution (local repro where possible, real CI logs otherwise), all fixed centrally in agents-harness and propagated to all 5 repos + ~/.claude:
+  1. 83 tracked `*:Zone.Identifier` junk files (Windows/WSL artifacts) being copied into every target by install.sh's `cp -r` — removed from git+disk, gitignored
+  2. `npm install` broken pre-existing in artists-booking (Arborist crash) — found, NOT fixed (pre-existing, out of scope), documented
+  3. `lint-staged@17+` requires git >=2.32.0, this machine has 2.25.1 — blocked the very first commit after rollout; pinned to `lint-staged@16`
+  4. `grep -c PATTERN || echo 0` duplicates output ("0\n0") because grep -c exits 1 on zero matches (normal case) while still printing "0" — crashed run-gates.sh (TSC_ERRORS) and run-policy-gate.sh (TF_FAILS/K8S_FAILS) under set -e on the ENTIRELY NORMAL case of zero findings
+  5. `gates.yml` missing top-level `permissions:` — checkov CKV2_GHA_1, found via infra-platform's first real infra-gates run against real Terraform
+  6. GHCR image name hardcoded to "agents-harness-sandbox" for every installed repo — denied (permission_denied: read_package) pushing from any repo other than agents-harness itself; derived per-repo name instead
+  7. `run-mutation.sh`'s grep pipeline for Stryker's "All files" summary line had zero fallback protection — crashed when Stryker found nothing to mutate (common: template's stryker.conf.json hardcodes Clean-Architecture paths not every project has)
+  8. `run-final.sh`'s SONAR_GATE line had the same unprotected-grep shape as its already-protected siblings — fixed proactively (not actively triggered, sonar not configured in any rollout target)
+- Final verification (real `gh api` checks, never trusted notifications): **4/5 repos fully green** (artists-booking, microgrow, rastafinancas, vetcare — all 7 jobs PASS including multi-arch GHCR publish). **infra-platform correctly RED** — `infra-gates` found 2 real, previously-unknown checkov findings (CKV_OCI_4, CKV_OCI_5) against the actual production OCI compute instance Terraform module. This is the gate working as designed, not a bug — deliberately NOT auto-fixed (live running instance, real blast radius, needs its own spec/approval) — recorded in infra-platform's own rollout spec, not silently patched.
+- Status: DONE (rollout + bug-fixing). Production Terraform findings in infra-platform: OPEN, escalated to user, not part of this task's scope to resolve unilaterally.
+
+Files changed (agents-harness): `.gitignore` (Zone.Identifier), `claude/install.sh` (lint-staged pin), `claude/skills/code-gates/scripts/run-gates.sh`, `claude/skills/code-gates/scripts/run-mutation.sh`, `claude/skills/code-gates/scripts/run-final.sh`, `claude/skills/policy-gates/scripts/run-policy-gate.sh`, `.github/workflows/gates.yml` (permissions + per-repo image name). Same files propagated to all 5 target repos + `~/.claude`.

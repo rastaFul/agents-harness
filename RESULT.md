@@ -1,5 +1,12 @@
 # Gate Hardening — Result (autonomous run, 2026-09-03)
 
+## Latest — Product-repo rollout complete (2026-09-09)
+Rolled out the full agent + gate bundle to all 5 remaining repos (artists-booking, microgrow, rastafinancas, vetcare, infra-platform) — a scoped `.specs/features/harness-gates-rollout/spec.md` per repo, `install.sh` run against each, only harness-installation files staged/committed (never pre-existing WIP in any repo).
+
+Doing this for real, against real repos and real CI, surfaced **11 more real bugs** no local check could have caught (Zone.Identifier junk files polluting installs, `lint-staged` git-version floor, a `grep -c || echo 0` duplication bug hit 3 separate times across different scripts, missing workflow `permissions:`, a hardcoded GHCR image name). All fixed centrally and propagated everywhere + synced to `~/.claude` — full list in `.specs/project/DECISIONS.md` ("2026-09-09") and `.specs/audit/execution.md` Task 9.
+
+**Verified final state (`gh api` on completed runs, never a trusted notification): 4/5 repos fully green** end to end. **infra-platform is red for a real reason, not a bug**: `infra-gates` found 2 genuine, previously-unknown checkov findings against the live production OCI compute instance Terraform (boot-volume encryption, legacy metadata endpoint) — deliberately not auto-fixed, since that's a running instance and the fix may require replacement (real blast radius) — escalated to the user, not guessed at.
+
 Spec: `.specs/project/SPEC.md`. Open questions (not decided, no guesses made): `QUESTIONS.md`. Full checkpoint trail: `.specs/project/STATE.md`. Per-task gate log: `.specs/audit/execution.md`.
 
 ## Caveat on "autonomous mode" — read this first
