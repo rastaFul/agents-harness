@@ -192,18 +192,29 @@ install_perf_a11y_tools
 # axe-playwright above. Previously document-only, a policy inconsistency
 # the user explicitly flagged and asked to resolve toward "always auto
 # install, since these are dependencies I always want as gates."
+#
+# BUG FOUND AND FIXED via a real product-repo rollout (rastafinancas,
+# 2026-09-08): lint-staged 17+ hard-requires git >=2.32.0 and refuses to
+# run at all below that — confirmed live, this machine's git is 2.25.1
+# (an entirely ordinary case: any dev machine not on a very recent distro/
+# WSL image). Without pinning, the FIRST commit after rollout fails
+# outright with "lint-staged requires at least Git version 2.32.0" — not a
+# soft warning, a hard block on every future commit. Pinned to
+# lint-staged@16 (last major line without that floor) instead of chasing
+# a system-wide git upgrade, which is a much bigger, more invasive change
+# than this template should make unilaterally on someone's machine.
 install_dev_quality_bundle() {
   if [ ! -f "$TARGET/package.json" ]; then
     echo "ℹ️  no package.json in $TARGET yet — skipping dev-quality bundle install, add later with:"
-    echo "   npm install -D husky lint-staged @commitlint/cli @commitlint/config-conventional dependency-cruiser eslint-plugin-sonarjs jscpd @stryker-mutator/core @stryker-mutator/jest-runner"
+    echo "   npm install -D husky lint-staged@16 @commitlint/cli @commitlint/config-conventional dependency-cruiser eslint-plugin-sonarjs jscpd @stryker-mutator/core @stryker-mutator/jest-runner"
     return
   fi
 
   echo "📦 Installing dev-quality bundle devDependencies into $TARGET..."
-  if (cd "$TARGET" && npm install -D husky lint-staged @commitlint/cli @commitlint/config-conventional dependency-cruiser eslint-plugin-sonarjs jscpd @stryker-mutator/core @stryker-mutator/jest-runner &>/dev/null); then
+  if (cd "$TARGET" && npm install -D husky lint-staged@16 @commitlint/cli @commitlint/config-conventional dependency-cruiser eslint-plugin-sonarjs jscpd @stryker-mutator/core @stryker-mutator/jest-runner &>/dev/null); then
     echo "✅ dev-quality bundle devDependencies installed"
   else
-    echo "⚠️  dev-quality bundle install failed — install manually: npm install -D husky lint-staged @commitlint/cli @commitlint/config-conventional dependency-cruiser eslint-plugin-sonarjs jscpd @stryker-mutator/core @stryker-mutator/jest-runner"
+    echo "⚠️  dev-quality bundle install failed — install manually: npm install -D husky lint-staged@16 @commitlint/cli @commitlint/config-conventional dependency-cruiser eslint-plugin-sonarjs jscpd @stryker-mutator/core @stryker-mutator/jest-runner"
     return
   fi
 
