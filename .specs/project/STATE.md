@@ -86,7 +86,7 @@ Scope (from user's answers, see QUESTIONS.pt-BR.md for exact wording):
 - Discovered during real install: nvm-managed Node breaks the wrapper silently on version switch — documented in SKILL.md, needs `claude-auto-retry install` re-run after any `nvm use`
 
 ## Pending / not done in this session
-- Empirical test against a real rate-limit hit — user will trigger this naturally during normal autonomous use, not simulated here
+- ~~Empirical test against a real rate-limit hit~~ — **VALIDATED 2026-09-09**, for real, during this same session's own Task 10 (see checkpoint note there): the subscription rate limit was hit mid-wait, `claude-auto-retry` resumed the tmux session automatically with the configured `retryMessage` ("Rate limit reset. Re-read .specs/project/STATE.md and .specs/audit/execution.md before continuing, then resume from the last checkpoint."), and the session correctly re-read both files before continuing per rule 9 — not simulated, an actual production hit. User confirmed independently on their end that the resume worked correctly.
 - User must `source ~/.bashrc`/`~/.zshrc` (or open new shell) for the wrapper to take effect
 
 ## Done (task 3 — mid-task checkpoint frequency)
