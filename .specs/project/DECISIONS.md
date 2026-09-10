@@ -98,3 +98,21 @@ Applying that fix and the earlier `reusable-ci.yml` permissions fix (the explici
 
 ## 2026-09-09 (later still) — claude-auto-retry empirically validated (real rate-limit hit, not simulated)
 The one item left open since the auto-retry skill was first built (2026-09-02, "Pending: empirical test against a real rate-limit hit — user will trigger this naturally during normal autonomous use") happened for real during this exact session's Task 10: mid-wait for CI results, the subscription rate limit was hit, `claude-auto-retry` resumed the same tmux session automatically, injected the configured `retryMessage`, and the session correctly followed rule 9 (re-read `STATE.md`/`execution.md` before trusting anything, then re-verified the actual CI state fresh rather than assuming pre-pause context still held). User independently confirmed the resume worked correctly on their end. This closes the last open validation gap for the auto-retry skill — it works in production, not just in theory.
+
+## 2026-09-10 — QUESTIONS.pt-BR.md bookkeeping corrigido + achado real de cota de storage
+Contexto: sessão de `harness-infra` (rodando a partir de `infra-platform`) tinha reportado ao
+usuário "thresholds de gate não definidos" como pendência — na verdade TODOS os itens 1-19a deste
+arquivo já tinham sido implementados e verificados nas Tasks 7-10 (2026-09-08/09), só que este
+arquivo nunca foi atualizado pra refletir isso (só o item 20 tinha marcação de "RESOLVIDO"). Isso já
+causou confusão real — corrigido agora com uma seção "RESOLVIDO" completa referenciando onde cada
+implementação vive e como foi verificada, pra não se repetir.
+**Achado novo e real no processo**: `build-sandbox` estava falhando em TODOS os 6 repos desde
+~2026-09-09 noite — não regressão de código, confirmado via log real: `Failed to CreateArtifact:
+Artifact storage quota has been hit`. Causa: volume de runs das Tasks 7-10 (múltiplos
+`docker build`+`publish-image` por repo, mesmo dia) acumulou ~39GB reais (24 artifacts só em
+`agents-harness`) antes do ciclo de recálculo de cota do GitHub (6-12h) zerar a contagem — plano
+gratuito de conta pessoal. Todos os artifacts deletados manualmente via API (ação real, não passiva)
+— mas um re-run de teste confirmou que o BLOQUEIO em si não libera na hora (a mensagem "recalculated
+every 6-12 hours" é literal: o gate usa uma foto periódica de uso, não checa em tempo real). Mesma
+categoria do 403 de branch protection (Task 8) — limitação de timing do GitHub, não algo pra forçar
+com retry. Vai se resolver sozinho dentro da janela declarada, sem mais ação.

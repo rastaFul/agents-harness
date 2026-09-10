@@ -64,3 +64,96 @@ Sempre que eu validar as nossas alterações, eu quero sincronizar com meu agent
 quero atualizar o harness-dev para receber também.
 19. **`run-final.sh` (code-gates) ainda não conectado para chamar os 3 novos scripts dev-quality** (`run-architecture-gate.sh`, `run-quality-extra.sh`, `run-mutation.sh`). Funcionam standalone; conectá-los na agregação final de gates existente é um próximo passo natural, não feito nesta passada (não estava na lista explícita de entregáveis dada ao agente dev-quality).
 Sim, quero que vc faça
+
+## RESOLVIDO — itens 1-19a (2026-09-08/09), bookkeeping corrigido 2026-09-10
+
+Achado real 2026-09-10: TODOS os itens 1-19a abaixo já estavam implementados e verificados desde
+Tasks 7-10 (`.specs/audit/execution.md`, 2026-09-08/09), mas este arquivo nunca foi atualizado pra
+refletir isso — só o item 20 tinha uma seção "RESOLVIDO". Isso já causou confusão real numa sessão
+de `harness-infra` que reportou ao usuário "thresholds de gate não definidos" como pendência,
+quando na verdade já tinham sido definidos e implementados dias antes. Corrigindo o registro agora
+pra isso não se repetir — cada item abaixo tem onde a implementação real vive e como foi verificada:
+
+1. **Custo (Infracost)**: `claude/skills/cost-gates/scripts/run-cost-gate.sh` — baseline $0, qualquer
+   custo mensal > 0 bloqueia. Verificado: PASS sintático (Task 7); sem `INFRACOST_API_KEY` real
+   ainda configurado em nenhum repo (item 8, ver abaixo) — o gate funciona, só roda `SKIPPED` até a
+   credencial existir.
+2. **Lighthouse CI**: `claude/skills/perf-a11y-gates/scripts/run-lighthouse.sh` — 90/100 nas 4
+   categorias. Verificado sintaticamente (Task 7); execução real depende de UI rodando localmente
+   (não testado contra uma UI real ainda, nenhum rollout com Playwright ativo até agora).
+3. **Stryker (mutation testing)**: `claude/templates/dev-quality/stryker.conf.json` —
+   `thresholds.break: 50` (ponto de partida, não uma medição de baseline real ainda — nenhum
+   projeto rodou Stryker de verdade até agora pra calibrar esse número contra dado real).
+4. **jscpd (duplicação)**: `claude/templates/dev-quality/.jscpd.json` — `threshold: 3` (%,
+   padrão de mercado pra "alto padrão de qualidade").
+5. **Semgrep**: `run-security-final.sh` — `ERROR` e `WARNING` bloqueiam.
+6. **osv-scanner unscored**: `run-security-gates.sh` — fail-closed, tratado como `HIGH`.
+7. **Barra uniforme 0-critical/0-high**: `trivy config`/`trivy fs`/`osv-scanner`/`sbom_grype` todos
+   `CRITICAL,HIGH`.
+8. **INFRACOST_API_KEY**: runbook em `docs/runbooks/infracost-api-key.md`. Credencial em si ainda
+   NÃO provisionada em nenhum repo — ação do usuário pendente (obter a key + `gh secret set` em
+   cada repo), não é código faltando.
+9. **Registry de container**: GHCR (`ghcr.io`), decidido e implementado — `publish-image` job em
+   `.github/workflows/gates.yml`, multi-arch (amd64+arm64), nome de imagem derivado por repo (não
+   hardcoded). Verificado com push real confirmado via log do `build-push-action` (Task 8) e rodando
+   nos 6 repos (Task 9/10).
+10. **Branch protection**: runbook em `docs/runbooks/branch-protection.md`. Tentado de verdade contra
+    `agents-harness` (API clássica + rulesets) — **bloqueado por limitação real do plano GitHub**
+    (403 "Upgrade to GitHub Pro or make this repository public" em repo privado, confirmado por 2
+    endpoints diferentes, Task 8). Documentado com os nomes de job reais pra quando o plano permitir.
+11. **CODEOWNERS**: `.github/CODEOWNERS` — `* @rastaFul`, copiado pro 5 repos de produto + este.
+12/13. **Pin de versão + Renovate**: todos os `ARG *_VERSION` em `docker/Dockerfile.sandbox`
+    pinados em versão exata (não mais `/latest/`); `renovate.json` na raiz com um customManager por
+    ferramenta (regex sobre cada ARG, datasource `github-releases`), `automerge: false` — todo bump
+    vira PR revisado, nunca automático, por pedido explícito do usuário ("sempre com revisão antes").
+14. **ARM64**: `docker/Dockerfile.sandbox` usa `${TARGETARCH}` em todos os installs, com
+    mapeamento especial pro asset do kube-linter (nome de arquivo diferente em arm64 vs amd64).
+    Verificado com `docker build --no-cache` real (Task 7).
+15. **terraform-docs --output-check**: verificado com fixture real, comportamento correto nas 2
+    direções (PASS quando atual, FAIL quando desatualizado) — Task 7.
+16. **Polaris JSON fields**: schema real verificado (o palpite original estava errado — não existe
+    `DangerResultCount`/`WarningResultCount` no nível raiz), parser reescrito e reverificado contra
+    fixture real (danger=3, warning=14) — Task 7.
+17. **install.sh auto-instala TODAS as devDependencies do bundle** (husky, lint-staged@16,
+    commitlint, dependency-cruiser, eslint-plugin-sonarjs, jscpd, Stryker) — não documenta mais só,
+    roda `npm install -D ...` de verdade. Mesmo padrão já usado pro `axe-playwright`.
+18. **Sincronização após validar**: processo seguido nas Tasks 7-10 — mudanças validadas em
+    `agents-harness` sincronizadas pra `~/.claude/` (global) e pros 5 repos de produto via rollout
+    (Task 9). Isso é uma prática operacional contínua, não um item que "termina" — todo `harness-infra`
+    deve continuar seguindo esse fluxo daqui pra frente (validar aqui → sincronizar → rollout).
+19. **`run-final.sh` conectado**: chama `run-architecture-gate.sh`/`run-quality-extra.sh`/
+    `run-mutation.sh` de verdade (não só standalone).
+19a. **`harness-dev.md` atualizado**: tabela de gates agora referencia dependency-cruiser,
+    jscpd/sonarjs, Stryker, security-gates, perf-a11y-gates com os thresholds decididos.
+
+Ver `.specs/audit/execution.md` Tasks 7 (implementação + verificação local), 8 (1º run real de CI
+no GitHub Actions, 5 bugs achados/corrigidos), 9 (rollout pros 5 repos de produto, 11 bugs
+achados/corrigidos, 4/5 verdes + 1 achado real de produção em infra-platura escalado), 10 (loop
+autônomo até 6/6 repos verdes, mais 2 bugs achados/corrigidos) pro detalhe completo de cada
+verificação real.
+
+## Achado novo 2026-09-10 — cota de storage do GitHub Actions estourada (não é bug de código)
+
+`build-sandbox` começou a falhar em TODOS os repos (`agents-harness`, `artists-booking`,
+`microgrow`, `vetcare`, `infra-platform`) entre 2026-09-09 ~20h e 2026-09-10 — não por regressão de
+código, confirmado via log real de cada job: `##[error]Failed to CreateArtifact: Artifact storage
+quota has been hit.` Causa: `retention-days: 1` já estava configurado desde o início (correto), mas
+o volume de runs das Tasks 7-10 (múltiplas iterações de `docker build`/`publish-image` em 6 repos
+num único dia, cada `harness-sandbox-image` artifact ~1GB) acumulou ~39GB reais antes do ciclo de
+recálculo de 6-12h do GitHub zerar a contagem — plano gratuito de conta pessoal.
+Ação tomada: todos os artifacts existentes deletados manualmente via API (`DELETE
+/repos/{owner}/{repo}/actions/artifacts/{id}`) nos 5 repos com Actions habilitado — ~39GB liberados
+(24 artifacts em `agents-harness` sozinho, confirmado via `GET .../actions/artifacts` mostrando 0
+bytes depois). **Testado de verdade com `gh run rerun` em `infra-platform` — ainda falha com o
+MESMO erro de cota**, mesmo com os artifacts já deletados. Ou seja: a frase "recalculated every
+6-12 hours" do próprio erro é literal — o GATE que bloqueia novos uploads usa uma foto periódica de
+uso, não checa em tempo real quantos artifacts existem agora. Deletar ajuda a não piorar, mas NÃO
+desbloqueia na hora. Isso é uma limitação de timing do lado do GitHub, não algo que dê pra forçar —
+mesma categoria do 403 de branch protection (Task 8): não é caso de "retry 3x e escalar", é uma
+janela de tempo definida pelo próprio GitHub. Vai se resolver sozinho dentro de até 6-12h da
+exaustão original (~2026-09-09 noite) sem mais nenhuma ação — não fica re-tentando.
+Não é uma ação recorrente automatizada ainda — se o padrão de múltiplos runs/dia em 6 repos
+continuar, isso pode voltar a acontecer. Considerar: reduzir `retention-days` pra 0 (não guardar
+nada, já que o artifact só serve de repasse entre jobs do MESMO run) ou usar cache do Docker layer
+em vez de artifact pra evitar o problema de raiz — não decidido/implementado, registrado como
+follow-up.
