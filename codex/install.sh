@@ -22,6 +22,19 @@ cp -r "$SCRIPT_DIR/.agents" "$TARGET/.agents"
 # Copy steering
 cp -r "$SCRIPT_DIR/steering" "$TARGET/steering"
 
+# Install infra-quality/policy/security/cost gate CLIs directly on the host
+# (tflint, terraform-docs, polaris, pluto, kubeconform, kube-linter,
+# conftest, osv-scanner, syft, grype, infracost, semgrep) — same tools
+# already baked into .harness-sandbox/docker/Dockerfile.sandbox for CI,
+# shared with the Claude Code installer so both agent CLIs get real gates
+# locally instead of SKIPPED (see rastaFul infra-platform .specs/project/
+# DECISIONS.md D-2026-09-15-2/3).
+REPO_ROOT="$(dirname "$SCRIPT_DIR")"
+if [ -f "$REPO_ROOT/scripts/install-gate-tools.sh" ]; then
+  echo "📦 Installing infra/policy/security/cost gate tools on host..."
+  bash "$REPO_ROOT/scripts/install-gate-tools.sh" || echo "⚠️  install-gate-tools.sh had failures — see output above, gates degrade to SKIPPED per-tool, never a false PASS"
+fi
+
 echo ""
 echo "✅ Installed successfully!"
 echo ""

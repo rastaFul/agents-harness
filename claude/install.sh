@@ -186,6 +186,18 @@ install_perf_a11y_tools() {
 
 install_perf_a11y_tools
 
+# Install infra-quality/policy/security/cost gate CLIs directly on the host
+# (tflint, terraform-docs, polaris, pluto, kubeconform, kube-linter,
+# conftest, osv-scanner, syft, grype, infracost, semgrep) — these already
+# ran for real in .harness-sandbox/docker/Dockerfile.sandbox (CI), this
+# closes the gap where the exact same skills/*-gates scripts reported
+# SKIPPED locally for lack of the binary (see rastaFul infra-platform
+# .specs/project/DECISIONS.md D-2026-09-15-2/3).
+if [ -f "$REPO_ROOT/scripts/install-gate-tools.sh" ]; then
+  echo "📦 Installing infra/policy/security/cost gate tools on host..."
+  bash "$REPO_ROOT/scripts/install-gate-tools.sh" || echo "⚠️  install-gate-tools.sh had failures — see output above, gates degrade to SKIPPED per-tool, never a false PASS"
+fi
+
 # Dev-quality gate bundle (dependency-cruiser, sonarjs, jscpd, Stryker,
 # husky/lint-staged/commitlint) — DECIDED (QUESTIONS.pt-BR.md #17, 2026-09):
 # auto-install everywhere a package.json exists, same policy as
