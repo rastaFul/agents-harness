@@ -213,3 +213,28 @@ Files changed (agents-harness): `claude/skills/infra-quality-gates/scripts/find-
   sobre redigir/remover histórico de `.specs/` ou aceitar a exposição antes de tornar público)
 - pin no perfil: SKIPPED (bloqueado pela etapa de visibilidade)
 - Status: BLOCKED
+
+## Task: agents-harness — sanitização e abertura — 2026-09-21T20:26:00-03:00
+- Encontrado: .specs/DECISIONS.md, execution.md, STATE.md, SPEC.md,
+  QUESTIONS.md/pt-BR, RESULT.md, runbooks, CODEOWNERS, gates.yml e
+  run-gates.sh citavam nominalmente os 3 repos que continuam privados
+  (artists-booking, microgrow, vetcare) em listas de rollout/CI cross-repo.
+- Decisão do usuário: não perder o conteúdo de decisão/auditoria — só
+  sanitizar. Substituição consistente: os 3 nomes privados generalizados
+  para "outros repositórios privados do usuário" / "um dos repositórios
+  privados do usuário", mantendo rastafinancas e infra-platform nomeados
+  (ambos já são/serão públicos) e toda a narrativa/racional das decisões
+  intacta.
+- Também corrigido: claude/CLAUDE.md (template distribuído via install.sh)
+  tinha os nomes reais dos produtos do usuário como se fossem exemplo
+  genérico — generalizado, isso evita vazar dado pessoal em instalações
+  de terceiros também.
+- gitleaks pós-sanitização: PASS (0 leaks, histórico não foi tocado, só
+  working tree/commits novos)
+- Verificação ampla (não só .md): grep recursivo confirmou zero menções
+  restantes aos 3 nomes em todo o repo (fora .git)
+- commit: e61eceb
+- visibilidade: PRIVATE -> PUBLIC
+- pin no perfil: não tentado (API do GitHub não suporta, confirmado na
+  rodada do rastafinancas)
+- Status: DONE
