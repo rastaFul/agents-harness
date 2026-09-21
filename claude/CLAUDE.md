@@ -31,7 +31,7 @@ This rule exists because it was broken three separate times before it was writte
 
 ## Infra Source of Truth
 
-`infra-platform` (repo: `github.com/rastaFul/infra-platform`, private) is the single source of truth for infrastructure decisions and conventions — for existing products (artists-booking, microgrow, rastafinancas, vetcare) and any new one, regardless of which project you're currently working in. Always check it before infra work.
+`infra-platform` (repo: `github.com/rastaFul/infra-platform`, private) is the single source of truth for infrastructure decisions and conventions — for existing products (rastafinancas e outros repositórios privados do usuário) and any new one, regardless of which project you're currently working in. Always check it before infra work.
 
 **Finding it — derive, don't hardcode:** all project repos live as siblings under one projects root (convention on this machine: `~/projects/`, but treat that as configurable, not a constant). From the current repo root, go up one level and look for `infra-platform/` there: `$(dirname "$(git rev-parse --show-toplevel)")/infra-platform`. If it's not there, ask the user for its path — never silently skip reading it or invent infra standalone.
 

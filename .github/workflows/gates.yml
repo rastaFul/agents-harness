@@ -254,7 +254,7 @@ jobs:
       # be lowercase"). The GitHub Actions expression language has no
       # built-in lower-case function, so this needs a real shell step.
       #
-      # BUG FOUND AND FIXED via a real product-repo rollout (microgrow,
+      # BUG FOUND AND FIXED via a real product-repo rollout (one of the user's private repos,
       # 2026-09-08, 9th real bug this session): the image name was
       # hardcoded to the literal string "agents-harness-sandbox" — correct
       # only in the agents-harness repo itself. Every OTHER project this

@@ -74,9 +74,9 @@ Two infra layers exist, never confuse them:
 - **Project-local test infra** (each app repo's own `docker-compose.dev.yml`): an isolated test database, separate from the dev DB you use manually. This is what the app server under test must point at. Owned by `harness-dev` — no spec, no `harness-infra` call needed to bring it up/down, it's ephemeral and reversible.
 
 Protocol before running the gate:
-1. Check the project repo for a test-specific service in `docker-compose.dev.yml` (convention: `<service>_test`, e.g. `postgres_test` on a different port than the dev DB — see `vetcare/docker-compose.dev.yml` for the reference pattern: `postgres` on 5432 for dev, `postgres_test` on 5433 for tests).
+1. Check the project repo for a test-specific service in `docker-compose.dev.yml` (convention: `<service>_test`, e.g. `postgres_test` on a different port than the dev DB — see the project's own docker-compose.dev.yml for the reference pattern: `postgres` on 5432 for dev, `postgres_test` on 5433 for tests).
 2. `docker compose -f docker-compose.dev.yml up -d <service>_test` (or equivalent) if not already running.
-3. Point the app server's env (`DATABASE_URL`, etc.) at the **test** instance, never dev or prod — for file-based DBs (SQLite, e.g. rastafinancas/artists-booking) use a dedicated test file path, not the dev `.db` file.
+3. Point the app server's env (`DATABASE_URL`, etc.) at the **test** instance, never dev or prod — for file-based DBs (SQLite, e.g. a SQLite-backed project) use a dedicated test file path, not the dev `.db` file.
 4. Only after the test DB is confirmed reachable, start the app server and run the gate.
 5. Never point the gate at `infra-platform`'s shared stack or at a cloud environment (`oci-free`/`aws-prod`) — those are out of scope for a dev-time E2E gate.
 

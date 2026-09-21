@@ -16,7 +16,7 @@ Answers QUESTIONS.pt-BR.md #8 ("o que eu preciso para ter essa informação?"). 
    # paste the key when prompted, or:
    echo "<your-key>" | gh secret set INFRACOST_API_KEY --repo rastaFul/agents-harness
    ```
-   Repeat per product repo once this template is rolled out there (artists-booking, microgrow, rastafinancas, vetcare) — each repo's Actions secrets are independent, this is not inherited automatically.
+   Repeat per product repo once this template is rolled out there (rastafinancas e outros repositórios privados do usuário) — each repo's Actions secrets are independent, this is not inherited automatically.
 4. **Local use** (agent running gates outside CI): export the same key as an env var before invoking the sandbox —
    ```bash
    export INFRACOST_API_KEY="<your-key>"

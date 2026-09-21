@@ -11,7 +11,7 @@ IN scope:
 OUT of scope (explicitly NOT done without separate approval):
 - Publishing any image to a real container registry (ghcr.io/rastaFul/...) — needs registry/auth decision, registered as open question.
 - Creating GitHub repo secrets, enabling branch protection, or any GitHub API/admin action on `rastaFul/agents-harness` or any product repo.
-- Modifying any product repo (artists-booking, microgrow, rastafinancas, vetcare) or infra-platform directly — only the reusable templates land in agents-harness; rollout to product repos is a separate future task.
+- Modifying any product repo (rastafinancas e outros repositórios privados do usuário) or infra-platform directly — only the reusable templates land in agents-harness; rollout to product repos is a separate future task.
 - Deciding numeric thresholds not already established (coverage %, cost delta %, Lighthouse score minimum) — use tool defaults, flag as question, do not invent a business threshold.
 
 ## Phases (from approved priority list)
@@ -38,9 +38,9 @@ User: "aplique [reusable-ci.yml fix] e entre em modo autonomo e em loop, até ze
 
 **Caveat, same as every prior "autonomous" request this initiative**: cannot self-relaunch as a separate `claude --agent harness-infra --remote-control` process from inside a running interactive session. Applying rule 9's spirit within this session instead (closed scope, checkpoints, circuit breaker) rather than claiming full compliance.
 
-**Closed scope (infra/security gate findings only, across the 6 repos this initiative already touches: agents-harness, artists-booking, microgrow, rastafinancas, vetcare, infra-platform):**
+**Closed scope (infra/security gate findings only, across the 6 repos this initiative already touches: agents-harness, rastafinancas, infra-platform e outros repositórios privados do usuário):**
 - IN: real findings surfaced by each repo's `Harness Gates` CI (`gates.yml`) infra/security jobs — tfsec, checkov, OPA policy-gate, trivy, and any NEW harness-template bug the loop itself surfaces (same discipline as the rollout: fix centrally, propagate).
-- OUT: pre-existing application-level CI failures unrelated to security/infra (broken `npm install` in artists-booking, actual product lint/test/coverage debt) — that's `harness-dev`/product-backlog territory, not this orchestrator's scope, and fixing it blind risks breaking real app behavior.
+- OUT: pre-existing application-level CI failures unrelated to security/infra (broken `npm install` in one of the user's private repos, actual product lint/test/coverage debt) — that's `harness-dev`/product-backlog territory, not this orchestrator's scope, and fixing it blind risks breaking real app behavior.
 - OUT: anything requiring credentials this session doesn't have (OCI apply, `INFRACOST_API_KEY`, GitHub Pro/branch protection) — already-escalated items stay escalated, not re-attempted here.
 - OUT: production `terraform apply` — code-level Terraform fixes stay in scope (validated via `terraform validate`/`tfsec`/`checkov`), applying to live state does not (no credentials, same as the OCI fix already done).
 

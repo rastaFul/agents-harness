@@ -10,7 +10,7 @@ Right now `.github/workflows/gates.yml` runs and reports pass/fail, but nothing 
 
 - `gh` CLI authenticated with admin rights on the target repo (`gh auth status` — this session's own token already has `repo` scope, sufficient for personal repos you own).
 - The repo must have run `.github/workflows/gates.yml` at least once on the target branch, so GitHub knows the check names to offer.
-- **Plan limitation confirmed live, 2026-09-08 (not assumed):** both the classic branch-protection API (`PUT .../branches/{branch}/protection`) and the newer rulesets API (`POST .../rulesets`) returned the same `403`: `"Upgrade to GitHub Pro or make this repository public to enable this feature."` — **private repos on a free personal GitHub plan cannot use branch protection or rulesets at all**, regardless of endpoint. This blocks `agents-harness` and every other private repo (artists-booking, microgrow, rastafinancas, vetcare, infra-platform) unless one of:
+- **Plan limitation confirmed live, 2026-09-08 (not assumed):** both the classic branch-protection API (`PUT .../branches/{branch}/protection`) and the newer rulesets API (`POST .../rulesets`) returned the same `403`: `"Upgrade to GitHub Pro or make this repository public to enable this feature."` — **private repos on a free personal GitHub plan cannot use branch protection or rulesets at all**, regardless of endpoint. This blocks `agents-harness` and every other private repo (rastafinancas, infra-platform e outros repositórios privados do usuário) unless one of:
   1. Upgrade the account to GitHub Pro (paid, unlocks this for all owned private repos), or
   2. Make the specific repo public (free, but changes real visibility — a deliberate per-repo decision, not something to default into).
 
@@ -19,7 +19,7 @@ Right now `.github/workflows/gates.yml` runs and reports pass/fail, but nothing 
 ## Steps (per repo)
 
 ```bash
-REPO="rastaFul/agents-harness"   # change per repo: artists-booking, microgrow, rastafinancas, vetcare, infra-platform
+REPO="rastaFul/agents-harness"   # change per repo: rastafinancas, infra-platform e outros repositórios privados do usuário
 BRANCH="main"
 
 gh api -X PUT "repos/$REPO/branches/$BRANCH/protection" \
@@ -57,4 +57,4 @@ gh api -X DELETE "repos/$REPO/branches/$BRANCH/protection"
 
 1. `agents-harness` itself (lowest risk — template repo, no prod traffic).
 2. `infra-platform` (once gates.yml is actually installed there).
-3. Product repos one at a time (artists-booking, microgrow, rastafinancas, vetcare) — after confirming `gates.yml` has run green at least once on each.
+3. Product repos one at a time (rastafinancas e outros repositórios privados do usuário) — after confirming `gates.yml` has run green at least once on each.

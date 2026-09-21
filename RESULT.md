@@ -7,10 +7,10 @@ Fixed the 2 real checkov findings on infra-platform's production OCI compute ins
 
 That fix (plus the `reusable-ci.yml` permissions fix) surfaced **2 more real bugs** in the exact same `infra-gates` job: `terraform validate`/`plan` assumed `.tf` files live at repo root (false for this repo's real nested layout — silently validated an empty directory, a false PASS) — added real root-module detection (`find-tf-root.sh`); and the OPA policy-gate step had no fallback for "no cloud credentials in CI" (true in every environment this initiative has touched) — made it non-blocking, same class of gap as `INFRACOST_API_KEY`.
 
-**Closing result, verified via `gh api` on actually-completed runs, re-checked fresh after a mid-task subscription rate-limit pause+resume: all 6 repos (agents-harness, artists-booking, microgrow, rastafinancas, vetcare, infra-platform) are fully green — 42/42 jobs pass.** Zero vulnerabilities, zero blocked gates remaining. This closes the entire rollout arc of the Gate Hardening initiative — from zero real CI runs ever succeeding (confirmed at the very start) to full green across the whole footprint, every fix found via real execution, never guessed. Full detail: `.specs/project/DECISIONS.md` ("2026-09-09 (later)"), `.specs/audit/execution.md` Task 10.
+**Closing result, verified via `gh api` on actually-completed runs, re-checked fresh after a mid-task subscription rate-limit pause+resume: all 6 repos (agents-harness, rastafinancas, infra-platform e outros repositórios privados do usuário) are fully green — 42/42 jobs pass.** Zero vulnerabilities, zero blocked gates remaining. This closes the entire rollout arc of the Gate Hardening initiative — from zero real CI runs ever succeeding (confirmed at the very start) to full green across the whole footprint, every fix found via real execution, never guessed. Full detail: `.specs/project/DECISIONS.md` ("2026-09-09 (later)"), `.specs/audit/execution.md` Task 10.
 
 ## Product-repo rollout complete (2026-09-09)
-Rolled out the full agent + gate bundle to all 5 remaining repos (artists-booking, microgrow, rastafinancas, vetcare, infra-platform) — a scoped `.specs/features/harness-gates-rollout/spec.md` per repo, `install.sh` run against each, only harness-installation files staged/committed (never pre-existing WIP in any repo).
+Rolled out the full agent + gate bundle to all 5 remaining repos (rastafinancas, infra-platform e outros repositórios privados do usuário) — a scoped `.specs/features/harness-gates-rollout/spec.md` per repo, `install.sh` run against each, only harness-installation files staged/committed (never pre-existing WIP in any repo).
 
 Doing this for real, against real repos and real CI, surfaced **11 more real bugs** no local check could have caught (Zone.Identifier junk files polluting installs, `lint-staged` git-version floor, a `grep -c || echo 0` duplication bug hit 3 separate times across different scripts, missing workflow `permissions:`, a hardcoded GHCR image name). All fixed centrally and propagated everywhere + synced to `~/.claude` — full list in `.specs/project/DECISIONS.md` ("2026-09-09") and `.specs/audit/execution.md` Task 9.
 
@@ -107,6 +107,6 @@ Final run (`34292146125`): **all 7 jobs green** — including `publish-image`, w
 Rollout to product repos and `INFRACOST_API_KEY` provisioning remain not started — the former needs explicit scoping (5 repos, each possibly in a different state), the latter needs the user's own account signup.
 
 ## Not yet done
-- Rollout to product repos (artists-booking, microgrow, rastafinancas, vetcare) and `infra-platform` itself — still deliberately out of scope pending user scoping (QUESTIONS.md #18).
+- Rollout to product repos (rastafinancas e outros repositórios privados do usuário) and `infra-platform` itself — still deliberately out of scope pending user scoping (QUESTIONS.md #18).
 - `INFRACOST_API_KEY` — needs the user to sign up; runbook ready (`docs/runbooks/infracost-api-key.md`).
 - Branch protection — blocked on a GitHub Pro / public-repo decision (see above); runbook ready and updated (`docs/runbooks/branch-protection.md`).

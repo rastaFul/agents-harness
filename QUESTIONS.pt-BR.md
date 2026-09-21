@@ -58,7 +58,7 @@ Sim, auto instalar, pois são dependencias que eu sempre quero usar como gates
 
 ## Rollout (deliberadamente fora de escopo nesta passada, conforme SPEC.md)
 
-18. **Quando/como fazer o rollout disso para os repos de produto** (artists-booking, microgrow, rastafinancas, vetcare) e para o próprio `infra-platform`. Esta passada só tocou `agents-harness` (o repo template-fonte). Rollout significa rodar `install.sh` novamente em cada projeto e lidar com o que já existir lá (mesmo cuidado tomado durante a sincronização anterior com `~/.claude` — diff antes, nunca sobrescrever às cegas).
+18. **Quando/como fazer o rollout disso para os repos de produto** (rastafinancas e outros repositórios privados do usuário) e para o próprio `infra-platform`. Esta passada só tocou `agents-harness` (o repo template-fonte). Rollout significa rodar `install.sh` novamente em cada projeto e lidar com o que já existir lá (mesmo cuidado tomado durante a sincronização anterior com `~/.claude` — diff antes, nunca sobrescrever às cegas).
 Sempre que eu validar as nossas alterações, eu quero sincronizar com meu agente global do claude e dos meus projetos.
 19a. **`harness-dev.md` NÃO foi atualizado com referências às novas skills de gate** — só `harness-infra.md` regra 3 recebeu a lista de bullets "Policy-as-code / Infra quality / Security scanning / Cost" adicionada nesta sessão. Os novos gates relevantes para dev (dependency-cruiser, jscpd/sonarjs, Stryker via `code-gates`, security-gates, perf-a11y-gates) existem e funcionam, mas a própria tabela de gates do `harness-dev.md` ainda não os menciona — o mesmo risco de "escrito mas órfão" sinalizado abaixo para `run-final.sh`, só que no nível do doc do orquestrador em vez do nível do script. Não feito nesta passada; sinalizando explicitamente em vez de deixar uma inconsistência silenciosa entre os dois docs de orquestrador.
 quero atualizar o harness-dev para receber também.
@@ -134,8 +134,8 @@ verificação real.
 
 ## Achado novo 2026-09-10 — cota de storage do GitHub Actions estourada (não é bug de código)
 
-`build-sandbox` começou a falhar em TODOS os repos (`agents-harness`, `artists-booking`,
-`microgrow`, `vetcare`, `infra-platform`) entre 2026-09-09 ~20h e 2026-09-10 — não por regressão de
+`build-sandbox` começou a falhar em TODOS os repos (`agents-harness`, `rastafinancas`,
+`infra-platform` e outros repositórios privados do usuário) entre 2026-09-09 ~20h e 2026-09-10 — não por regressão de
 código, confirmado via log real de cada job: `##[error]Failed to CreateArtifact: Artifact storage
 quota has been hit.` Causa: `retention-days: 1` já estava configurado desde o início (correto), mas
 o volume de runs das Tasks 7-10 (múltiplas iterações de `docker build`/`publish-image` em 6 repos

@@ -169,18 +169,18 @@ Files changed:
 
 ## Task 9: Product-repo rollout + 11 real bugs found via live CI — 2026-09-09T06:50:48-03:00
 
-- Created `.specs/features/harness-gates-rollout/spec.md` in all 5 target repos (artists-booking, microgrow, rastafinancas, vetcare, infra-platform) before executing, per spec-driven principle
+- Created `.specs/features/harness-gates-rollout/spec.md` in all 5 target repos (rastafinancas, infra-platform e outros repositórios privados do usuário) before executing, per spec-driven principle
 - Ran `install.sh` against all 5, verified files/syntax/yamllint before each commit, staged ONLY harness-installation paths (never pre-existing unrelated WIP in each repo — verified via git status before each git add)
 - 11 real bugs found and fixed during rollout, all via genuine execution (local repro where possible, real CI logs otherwise), all fixed centrally in agents-harness and propagated to all 5 repos + ~/.claude:
   1. 83 tracked `*:Zone.Identifier` junk files (Windows/WSL artifacts) being copied into every target by install.sh's `cp -r` — removed from git+disk, gitignored
-  2. `npm install` broken pre-existing in artists-booking (Arborist crash) — found, NOT fixed (pre-existing, out of scope), documented
+  2. `npm install` broken pre-existing in one of the user's private repos (Arborist crash) — found, NOT fixed (pre-existing, out of scope), documented
   3. `lint-staged@17+` requires git >=2.32.0, this machine has 2.25.1 — blocked the very first commit after rollout; pinned to `lint-staged@16`
   4. `grep -c PATTERN || echo 0` duplicates output ("0\n0") because grep -c exits 1 on zero matches (normal case) while still printing "0" — crashed run-gates.sh (TSC_ERRORS) and run-policy-gate.sh (TF_FAILS/K8S_FAILS) under set -e on the ENTIRELY NORMAL case of zero findings
   5. `gates.yml` missing top-level `permissions:` — checkov CKV2_GHA_1, found via infra-platform's first real infra-gates run against real Terraform
   6. GHCR image name hardcoded to "agents-harness-sandbox" for every installed repo — denied (permission_denied: read_package) pushing from any repo other than agents-harness itself; derived per-repo name instead
   7. `run-mutation.sh`'s grep pipeline for Stryker's "All files" summary line had zero fallback protection — crashed when Stryker found nothing to mutate (common: template's stryker.conf.json hardcodes Clean-Architecture paths not every project has)
   8. `run-final.sh`'s SONAR_GATE line had the same unprotected-grep shape as its already-protected siblings — fixed proactively (not actively triggered, sonar not configured in any rollout target)
-- Final verification (real `gh api` checks, never trusted notifications): **4/5 repos fully green** (artists-booking, microgrow, rastafinancas, vetcare — all 7 jobs PASS including multi-arch GHCR publish). **infra-platform correctly RED** — `infra-gates` found 2 real, previously-unknown checkov findings (CKV_OCI_4, CKV_OCI_5) against the actual production OCI compute instance Terraform module. This is the gate working as designed, not a bug — deliberately NOT auto-fixed (live running instance, real blast radius, needs its own spec/approval) — recorded in infra-platform's own rollout spec, not silently patched.
+- Final verification (real `gh api` checks, never trusted notifications): **4/5 repos fully green** (rastafinancas e outros repositórios privados do usuário — all 7 jobs PASS including multi-arch GHCR publish). **infra-platform correctly RED** — `infra-gates` found 2 real, previously-unknown checkov findings (CKV_OCI_4, CKV_OCI_5) against the actual production OCI compute instance Terraform module. This is the gate working as designed, not a bug — deliberately NOT auto-fixed (live running instance, real blast radius, needs its own spec/approval) — recorded in infra-platform's own rollout spec, not silently patched.
 - Status: DONE (rollout + bug-fixing). Production Terraform findings in infra-platform: OPEN, escalated to user, not part of this task's scope to resolve unilaterally.
 
 Files changed (agents-harness): `.gitignore` (Zone.Identifier), `claude/install.sh` (lint-staged pin), `claude/skills/code-gates/scripts/run-gates.sh`, `claude/skills/code-gates/scripts/run-mutation.sh`, `claude/skills/code-gates/scripts/run-final.sh`, `claude/skills/policy-gates/scripts/run-policy-gate.sh`, `.github/workflows/gates.yml` (permissions + per-repo image name). Same files propagated to all 5 target repos + `~/.claude`.
@@ -194,7 +194,22 @@ Files changed (agents-harness): `.gitignore` (Zone.Identifier), `claude/install.
   2. "Policy gates" (terraform plan + OPA) was the only infra-gates step with no `|| true` escape hatch. Confirmed locally (real terraform v1.9.8, no Docker needed): even with the directory fix, `terraform plan` cannot succeed without real Terraform Cloud/OCI credentials (this env uses an HCP Terraform backend per ADR 008) — none exist in this session or in the repo's GH secrets (`gh secret list` confirmed empty). Made the step non-blocking with a clear `::warning::`, same class of gap as INFRACOST_API_KEY (documented, not silently ignored).
 - Both fixes committed+pushed to agents-harness, synced to `~/.claude`, propagated to all 5 rollout repos with syntax/yamllint verification before each commit
 - Session paused for a subscription rate limit mid-wait; resumed via claude-auto-retry; re-read STATE.md/execution.md per protocol (rule 9) before trusting anything, then re-verified final CI state fresh rather than assuming pre-pause context was still accurate
-- **Final verification, all real `gh api` calls on completed runs**: 6/6 repos (agents-harness, artists-booking, microgrow, rastafinancas, vetcare, infra-platform) `Harness Gates` = `success`. Per-job: 42/42 (7 jobs × 6 repos) = `success`, including `publish-image` (multi-arch GHCR) everywhere.
+- **Final verification, all real `gh api` calls on completed runs**: 6/6 repos (agents-harness, rastafinancas, infra-platform e outros repositórios privados do usuário) `Harness Gates` = `success`. Per-job: 42/42 (7 jobs × 6 repos) = `success`, including `publish-image` (multi-arch GHCR) everywhere.
 - Status: DONE. Zero vulnerabilities, zero blocked gates remaining in scope.
 
 Files changed (agents-harness): `claude/skills/infra-quality-gates/scripts/find-tf-root.sh` (new), `.github/workflows/gates.yml` (tfroot detection step + policy-gate non-blocking). Same files propagated to all 5 target repos + `~/.claude`. Also `infra-platform/.github/workflows/reusable-ci.yml` (permissions fix) and `infra-platform/terraform/modules/oci-compute/main.tf` (the CKV_OCI_4/5 fix from the prior turn, now confirmed green in CI).
+
+## Task: agents-harness opensource-prep — 2026-09-21T15:11:47-03:00
+- gitleaks: PASS (34 commits, ~521KB scanned, no leaks found)
+- revisão .harness-sandbox/.specs: BLOQUEADO. `.harness-sandbox/` só tem symlink pra `../docker`, sem achados.
+  `.specs/` (tracked, JÁ no remote): `.specs/audit/execution.md`, `DECISIONS.md`, `STATE.md`, `SPEC.md` contêm
+  detalhe interno real de infraestrutura privada além de citação genérica de nomes de repo:
+  achados de segurança de produção (checkov CKV_OCI_4/CKV_OCI_5 — boot-volume encryption e legacy metadata
+  endpoint numa instância OCI de produção real, antes do fix), bug específico num repositório privado do usuário (crash do
+  Arborist no npm install), arquitetura de CI/CD detalhada cross-repo (GHCR, branch-protection API testada
+  contra os 6 repos privados nomeados), tudo já commitado e no remote `main`. Isso excede "exemplo genérico"
+  e entra em "detalhe interno" — critério de pronto do spec não está satisfeito sem decisão do usuário.
+- visibilidade: mantido PRIVATE (motivo: achado do passo 2 não resolvido — aguardando decisão do usuário
+  sobre redigir/remover histórico de `.specs/` ou aceitar a exposição antes de tornar público)
+- pin no perfil: SKIPPED (bloqueado pela etapa de visibilidade)
+- Status: BLOCKED

@@ -7,7 +7,7 @@ cd "$DIR"
 RESULT='{"timestamp":"'$(date -Iseconds)'","gates":{},"overall":"PASS"}'
 
 # tsc
-# BUG FOUND AND FIXED via a real product-repo rollout (artists-booking,
+# BUG FOUND AND FIXED via a real product-repo rollout (one of the user's private repos,
 # 2026-09-08): `grep -c PATTERN || echo 0` is broken — `grep -c` ALWAYS
 # prints a valid count to stdout (including "0"), but its own exit code is
 # 1 whenever the count is zero (not an error, just "no matches" — the
