@@ -148,7 +148,7 @@ When working on UI tasks, these additional skills activate automatically:
 ## Skills Ativos
 
 - `snip` — CLI proxy ativo via PreToolUse hook. Filtra saída de npm/npx/git/jest/tsc antes de chegar ao modelo. Ver `skills/snip/SKILL.md`. Checar ganhos: `snip gain`.
-- `caveman` — Estilo de comunicação token-eficiente (`skills/caveman/SKILL.md`)
+- `caveman` output style (native, Claude Code only) — `output-styles/caveman.md`. Stronger precedence than CLAUDE.md prose (replaces the Default system-prompt style). Activate by setting `"outputStyle": "Caveman"` in your own `~/.claude/settings.json` (user-level config, not committed to this repo). See `skills/caveman/SKILL.md` for the superseded skill-based fallback.
 - `playwright-mcp` — Gate E2E via browser real (`skills/playwright-mcp/SKILL.md`)
 - `auto-retry` — Resume automático de sessão `autonomous` após rate limit da assinatura (5h/semanal) + `--remote-control` obrigatório pra acompanhamento via mobile. Ver `skills/auto-retry/SKILL.md`. Status: `claude-auto-retry status`.
 - `context-search` — Busca por keyword ("RAG-lite", ripgrep, sem embeddings) sobre `.specs/audit/archive/`, `skills/`, `steering/`. Companion `archive-session.sh` mantém STATE.md/DECISIONS.md enxutos. Ver `skills/context-search/SKILL.md`.

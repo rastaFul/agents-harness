@@ -324,3 +324,19 @@ Files changed (agents-harness): `claude/skills/infra-quality-gates/scripts/find-
   global pro repositório git — não foi pedido nesta sessão, continua em
   aberto separadamente.
 - Status: DONE (sync completo e verificado, sem overwrite cego)
+
+## Task 12: caveman output-style port (repo) — 2026-09-22T17:20:27-03:00
+
+- diff verification (global → repo copy): PASS (byte-identical)
+- Frontmatter validation: PASS (name, description, keep-coding-instructions fields present and correct)
+- claude/skills/caveman/SKILL.md: added superseded note at top (line 3), rest of content intact (line count 50 → 51, net +1)
+- claude/CLAUDE.md: updated "## Skills Ativos" bullet for caveman — replaced skill reference with output-style native documentation, ativation instructions, fallback note
+- Content integrity checks:
+  - SKILL.md: grep found "caveman", "output-style", "output-styles" references (3 lines) — correct placement, no duplicates
+  - CLAUDE.md: grep found caveman reference (line 151) with correct output-style path and settings.json guidance
+  - No broken/dangling references; grep for "claude/skills/caveman/SKILL.md" and "output-styles/caveman.md" paths consistent
+- Files copied/edited:
+  - claude/output-styles/caveman.md (new)
+  - claude/skills/caveman/SKILL.md (edit: +1 line note)
+  - claude/CLAUDE.md (edit: skills-ativos bullet replaced)
+- Status: DONE

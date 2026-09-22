@@ -1,5 +1,7 @@
 # DECISIONS
 
+- [2026-09-22] `caveman` skill mantido (não removido) mesmo após criar o output-style nativo — marcado como superseded/fallback pra formato codex, evita perda de informação.
+
 ### Índice arquivado
 - [2026-09-08] First real GitHub Actions run of gates.yml: 5 bugs found+fixed, GHCR live, branch protection blocked by plan → ver .specs/audit/archive/2026-09.md
 - [2026-09-08] QUESTIONS.pt-BR.md rollout (Task 7, all 20 items resolved/executed) → ver .specs/audit/archive/2026-09.md

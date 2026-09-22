@@ -10,10 +10,10 @@ entre global (só tinha rule 6b, model routing, da Feature 1) e repo (só tinha
 rule 1-update+9b) encontrada e reconciliada por merge nos dois sentidos —
 ambos os pares agora idênticos em estrutura (headers conferidos via diff,
 rc=0). `context-search` registrado em `~/.claude/CLAUDE.md` também. Detalhe
-completo: `.specs/audit/execution.md` Task 11 e 11b. Pendente: commit git
-(aguardando pedido explícito) e port da Feature 1 (output-style `caveman` +
-`outputStyle` em settings.json) pro repositório — item separado, ainda não
-retomado nesta sessão.
+completo: `.specs/audit/execution.md` Task 11 e 11b. Task 12: port do
+output-style `caveman` pro repo concluído e verificado (`claude/output-styles/caveman.md`
+byte-idêntico ao global, `claude/skills/caveman/SKILL.md` marcado superseded
+sem remoção, `claude/CLAUDE.md` documentado). Pendente: commit git.
 
 ---
 

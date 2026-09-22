@@ -1,5 +1,7 @@
 # Caveman
 
+**Superseded (Claude Code):** for Claude Code, prefer the native output style at `claude/output-styles/caveman.md` (stronger precedence than a skill — replaces the Default system-prompt style instead of competing with it as appended prose). This skill file is kept as-is for reference and as a fallback for formats without output-style support (e.g. codex). Do not delete.
+
 Communication style for maximizing Claude Pro session duration by minimizing token waste.
 
 ## Activation
