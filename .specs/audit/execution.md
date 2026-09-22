@@ -340,3 +340,21 @@ Files changed (agents-harness): `claude/skills/infra-quality-gates/scripts/find-
   - claude/skills/caveman/SKILL.md (edit: +1 line note)
   - claude/CLAUDE.md (edit: skills-ativos bullet replaced)
 - Status: DONE
+
+## Task 13: README.md skills list sync — 2026-09-22T18:04:07-03:00
+
+- Spec read (`.specs/features/readme-skills-sync/spec.md`): PASS, task scoped to 8 missing skills
+- SKILL.md first-line descriptions read (all 8 files): PASS
+- README.md editing: added 8 bullets to "### Skills (reusable behaviors)" section
+  - caveman (after snip): "Communication style for maximizing token efficiency in Claude Pro sessions"
+  - cost-gates (after code-gates): "Infracost integration for monthly cost delta estimation in Terraform plans"
+  - infra-quality-gates (after cost-gates): "Infrastructure quality gates (linting, validation, best-practices scoring)"
+  - perf-a11y-gates (after infra-quality-gates): "Performance and accessibility gates via Lighthouse CI and axe-core"
+  - policy-gates (after perf-a11y-gates): "Policy-as-code validation (OPA/Conftest) for Terraform and Kubernetes"
+  - security-gates (after policy-gates): "Deterministic security scanning (gitleaks, trivy, osv-scanner, semgrep)"
+  - context-search (after napkin): "Keyword retrieval over archived audit history, skills, and steering docs (RAG-lite)"
+  - auto-retry (after firecrawl): "Resume autonomous sessions after rate-limit reset, with safe tmux injection"
+- Verification: `ls claude/skills | wc -l` = 22, README bullets (lines 84–105) = 22 (1:1 match)
+- Files changed:
+  - README.md (lines 83–105 rewritten, net +8 bullets)
+- Status: DONE

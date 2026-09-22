@@ -82,6 +82,7 @@ The agents support any cloud provider. AWS examples are included in the infra ag
 
 ### Skills (reusable behaviors)
 - **snip** — CLI proxy that filters shell output (npm, jest, tsc, git) before it reaches the model. Installed automatically; avg 97% token reduction.
+- **caveman** — Token-efficient communication style. For Claude Code, superseded by the native `output-styles/caveman.md` (stronger precedence); this skill remains as fallback for formats without output-style support
 - **harness-gates** — Mandatory checkpoints before/during/after actions
 - **feedback-loop** — Autonomous execute→verify→correct cycle
 - **audit-trail** — Complete action logging
@@ -90,11 +91,18 @@ The agents support any cloud provider. AWS examples are included in the infra ag
 - **spec-manager** — Scripts to create/manage `.specs/` structure
 - **audit-writer** — Scripts to write audit entries and metrics
 - **code-gates** — Scripts to run TypeScript/Node.js quality gates
+- **cost-gates** — Infracost integration for monthly cost delta estimation in Terraform plans
+- **infra-quality-gates** — Infrastructure quality gates (linting, validation, best-practices scoring)
+- **perf-a11y-gates** — Performance and accessibility gates via Lighthouse CI and axe-core
+- **policy-gates** — Policy-as-code validation (OPA/Conftest) for Terraform and Kubernetes
+- **security-gates** — Deterministic security scanning (gitleaks, trivy, osv-scanner, semgrep)
 - **interface-design** — Persistent design system guardian via `.interface-design/system.md`
 - **playwright-mcp** — E2E and visual regression gate using Playwright MCP server
 - **ux-journey** — Goal-completion/usability gate for significant UI changes, independent from functional E2E — orchestrates the `ux-journey-judge` sub-agent
 - **napkin** — Tactical session memory per repository via `.claude/napkin.md`
+- **context-search** — Keyword retrieval over archived audit history, skills, and steering docs (RAG-lite)
 - **firecrawl** — Web scraping and structured extraction for research inputs
+- **auto-retry** — Resume autonomous sessions after rate-limit reset, with safe tmux injection
 
 ### Agents
 - **harness-infra** — Orchestrator for infrastructure (Terraform, K8s, AWS, Helm, Docker)
