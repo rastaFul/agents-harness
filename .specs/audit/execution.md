@@ -357,4 +357,28 @@ Files changed (agents-harness): `claude/skills/infra-quality-gates/scripts/find-
 - Verification: `ls claude/skills | wc -l` = 22, README bullets (lines 84–105) = 22 (1:1 match)
 - Files changed:
   - README.md (lines 83–105 rewritten, net +8 bullets)
+- caveman bullet corrected post-delegation to mention superseded/output-style
+  status (sub-agent's version omitted it despite the instruction) — done
+  directly by orchestrator, verified.
+- Status: DONE
+
+## Task 14: sync Task 12 caveman edits to ~/.claude — 2026-09-22T18:06:04-03:00
+- Gap found: global `~/.claude/skills/caveman/SKILL.md` and `~/.claude/CLAUDE.md`
+  caveman bullet were never updated when Task 12 ported the output-style to
+  the repo (Task 12 only touched repo files) — global still had the
+  pre-output-style text.
+- Fixed directly (orchestrator, doc-only, low risk):
+  - `~/.claude/skills/caveman/SKILL.md`: added same superseded note as repo,
+    path adjusted (`output-styles/caveman.md`, no `claude/` prefix — correct
+    for global layout).
+  - `~/.claude/CLAUDE.md`: caveman bullet replaced with the same text as
+    repo's `claude/CLAUDE.md` (paths already prefix-free, reused verbatim).
+- Verification: `diff` global vs repo for both files — only 2 expected
+  differences remain: (1) `claude/` path prefix in SKILL.md (correct, layout
+  difference), (2) `infra-platform` products line in CLAUDE.md (pre-existing,
+  intentional sanitization from earlier "chore: sanitizar referências"
+  commit — real private repo names in global, sanitized in public repo copy;
+  left untouched, not part of this sync).
+- README.md has no global equivalent (repo-only file) — nothing to sync there.
+- Status: DONE
 - Status: DONE
