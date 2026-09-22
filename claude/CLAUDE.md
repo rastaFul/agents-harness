@@ -151,6 +151,7 @@ When working on UI tasks, these additional skills activate automatically:
 - `caveman` — Estilo de comunicação token-eficiente (`skills/caveman/SKILL.md`)
 - `playwright-mcp` — Gate E2E via browser real (`skills/playwright-mcp/SKILL.md`)
 - `auto-retry` — Resume automático de sessão `autonomous` após rate limit da assinatura (5h/semanal) + `--remote-control` obrigatório pra acompanhamento via mobile. Ver `skills/auto-retry/SKILL.md`. Status: `claude-auto-retry status`.
+- `context-search` — Busca por keyword ("RAG-lite", ripgrep, sem embeddings) sobre `.specs/audit/archive/`, `skills/`, `steering/`. Companion `archive-session.sh` mantém STATE.md/DECISIONS.md enxutos. Ver `skills/context-search/SKILL.md`.
 
 ## Token Efficiency (Caveman Mode)
 

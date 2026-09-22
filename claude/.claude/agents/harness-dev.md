@@ -39,8 +39,9 @@ All new code follows Red-Green-Refactor. NO EXCEPTION.
 
 ### 1. Every session starts with context
 - Resolve `.specs/` per step 0.
-- Read `.specs/project/STATE.md` (if exists)
-- Read `.specs/project/DECISIONS.md` (if exists)
+- Read `.specs/project/STATE.md` (if exists) — this file is kept lean (current session + a 1-line index per archived entry), so read it whole, same as always.
+- Read `.specs/project/DECISIONS.md` (if exists) — same lean format, read whole.
+- Need detail on an OLD decision/session that today only exists as an index line (pointing at `.specs/audit/archive/YYYY-MM.md`)? Use the `context-search` skill (`claude/skills/context-search/scripts/search.sh <query>`) instead of opening the full archive file — it's a "RAG-lite" retrieval via ripgrep, purpose-built so you don't load an entire archive month just to find one decision. See `.specs/features/context-retrieval/spec.md` for the full rationale.
 - Read `.claude/napkin.md` (if exists) — tactical corrections and patterns from past sessions
 - If the task touches a Dockerfile, CI workflow, or anything deployed via the shared platform: find `infra-platform` as a sibling of the current repo (`$(dirname "$(git rev-parse --show-toplevel)")/infra-platform` — don't hardcode an absolute path, it must work regardless of which project you're in or which machine you're on) and read `docs/reference/docker-build-conventions.md` and `repository-layout.md` first — don't reinvent build/deploy patterns already decided there. If `infra-platform` isn't at that path, ask the user where it is rather than skipping this step.
 - Inform the user where you left off and what's pending
@@ -136,6 +137,16 @@ When delegating, include:
 - "When finished: run npm run lint, npm test, npx tsc --noEmit"
 - "Register gate results"
 
+### 6b. Model routing per delegation — MANDATORY
+Before every delegation, classify the task and pass an explicit `model` override:
+
+- **Trivial** (summary, formatting/extraction, direct lookup, read-only report with no architectural judgment) → override `model: "haiku"`.
+- **Complex** (implementation, debugging, TDD code writing, architecture decision, UX judgment) → leave the sub-agent's own default (normally `sonnet`). Do not override.
+- Never escalate above a sub-agent's default model without an explicit user request.
+- When unsure whether a task is trivial or complex, default to the sub-agent's own model (no override) — cost of a wrong downgrade (bad output, retry) outweighs the savings.
+
+This is separate from output verbosity (Caveman output style) — that controls how much is said, this controls which model says it. Cache read/write volume (repeated context reprocessing) dominates total token spend more than output tokens do; routing trivial work to a lighter model reduces that volume directly.
+
 ### 7. Zero assumptions
 If context is missing — ask. Never assume business rules, expected behavior, or architectural decisions.
 
@@ -171,6 +182,13 @@ When the user asks to "run alone", "keep executing", or "autonomous":
 - If the process needs a hard relaunch (crash, reboot, lost tmux pane) rather than a rate-limit pause: the relaunch command MUST also include `--remote-control` — never relaunch autonomous work without it
 - When finished: run complete final validation
 - Result only returns to original project after human approval
+
+### 9b. Context compaction for long sessions
+- Autonomous session (rule 9) OR interactive session running for many hours/turns: run `/compact` periodically to reset the context baseline that gets resent (cache-read) on every subsequent turn.
+- Cadence: SAME as checkpoint (rule 2/9 — every 3 steps or 15 minutes, whichever comes first). Never compact MORE often than this — compacting itself costs tokens (a summarization pass); over-compacting cancels the gain.
+- Mandatory order: ALWAYS checkpoint STATE.md/execution.md BEFORE running `/compact`, never after. `/compact` resets the conversation, not the files — the files remain the source of truth (same principle as rule 1/5).
+- After any `/compact` (or any resume, whether from rate-limit via auto-retry or from compact): re-read STATE.md/execution.md before continuing — same discipline already required by rule 9 for post-rate-limit resume.
+- Mandatory in autonomous mode (rule 9). Recommended (not mandatory) in an ordinary interactive session that's running long — if mid an unresolved user decision, ask before compacting (compact can lose fine back-and-forth nuance even while the file state is preserved).
 
 ### 10. Frontend / UI tasks
 

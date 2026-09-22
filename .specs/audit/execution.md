@@ -238,3 +238,89 @@ Files changed (agents-harness): `claude/skills/infra-quality-gates/scripts/find-
 - pin no perfil: não tentado (API do GitHub não suporta, confirmado na
   rodada do rastafinancas)
 - Status: DONE
+
+## Task 11: context-retrieval (RAG-lite: arquivamento + context-search + /compact) — 2026-09-22T16:12:16-03:00
+- Spec: `.specs/features/context-retrieval/spec.md` (APROVADO)
+- Diagnóstico: skills/steering já lazy-load (nativo); gargalo real era
+  STATE.md+DECISIONS.md lidos por inteiro toda sessão (~14k tokens,
+  recacheados a cada turno em sessões longas), sem arquivamento, crescendo
+  desde 2026-05.
+- Decisão de arquitetura: keyword search (ripgrep) em vez de embeddings —
+  corpus pequeno (~3500 linhas, dezenas de arquivos nomeados) não justifica
+  vector DB/embedding model.
+- Implementado (2 task-executor em paralelo):
+  1. Skill `claude/skills/context-search/` — `search.sh` (rg -n -C2, resolve
+     repo root via git, fallback pra ripgrep bundled do Claude Code em
+     sandboxes onde `rg` só existe como shell function) + `archive-session.sh`
+     (move blocos fechados de STATE.md/DECISIONS.md pra
+     `.specs/audit/archive/YYYY-MM.md`, deixa índice de 1 linha, nunca
+     deleta). Registrada em `claude/CLAUDE.md` "Skills Ativos" (estava
+     faltando, corrigido nesta task).
+  2. Rule 1 (harness-dev.md/harness-infra.md): explicita uso de
+     `context-search` pra histórico arquivado em vez de abrir arquivo
+     inteiro.
+  3. Rule 9b nova (ambos os orquestradores): `/compact` em sessões
+     autônomas/longas, mesma cadência do checkpoint (3 passos/15min),
+     SEMPRE depois de checkpoint (nunca antes), reler STATE/execution.md
+     após.
+- Interrupção real: 1a task-executor foi cortada por rate limit da
+  assinatura no meio da verificação final (já tinha terminado o trabalho
+  real — arquivamento aplicado, scripts prontos). Retomado por mim
+  (orquestrador) direto: reli o estado real em disco em vez de confiar no
+  relatório parcial (git status, wc -l, conteúdo dos arquivos), não repeti
+  trabalho já feito — mesma disciplina da rule 9/9b pós-resume.
+- Verificação externa (própria, pós-resume, não auto-declarada pelo
+  sub-agent):
+  - `bash -n` search.sh: PASS
+  - `bash -n` archive-session.sh: PASS
+  - `shellcheck` search.sh: PASS (0 findings)
+  - `shellcheck` archive-session.sh: PASS (0 findings)
+  - Teste funcional real: query "checkov" → retorno correto (file:line +
+    contexto) do conteúdo arquivado; query inexistente → vazio, exit 0
+  - STATE.md: 97 → 14 linhas (meta ≤50: OK)
+  - DECISIONS.md: 118 → 21 linhas (meta ≤50: OK)
+  - archive/2026-09.md: 233 linhas, conteúdo íntegro (comparado
+    manualmente contra o que existia antes — nada perdido, só realocado)
+  - Rule 9b presente e numeração 0-10 intacta em ambos os arquivos
+    (`grep -n "^### "` conferido)
+- Pendente: sync pra `~/.claude` (aguardando validação do usuário, mesmo
+  protocolo de sessões anteriores — diff antes de sobrescrever), commit git
+  (não pedido ainda).
+- Status: DONE (implementação); PENDING (sync + commit, aguardando user)
+
+## Task 11b: sync repo → ~/.claude + reconciliação de divergência — 2026-09-22T17:14:51-03:00
+- Aprovado pelo usuário: "Pode fazer o sync e o push".
+- Divergência encontrada antes do sync: `~/.claude/agents/harness-dev.md` e
+  `harness-infra.md` (globais) tinham a rule 6b (model routing, da Feature 1
+  anterior, feita direto no global) mas NÃO tinham a rule 1-update + 9b
+  (`/compact`, Feature 2, feita direto no repo). O inverso valia pro repo.
+  Resolvido por merge nos dois sentidos, não overwrite:
+  - repo `harness-dev.md`/`harness-infra.md`: adicionada rule 6b (copiada do
+    global, idêntica).
+  - global `harness-dev.md`/`harness-infra.md`: adicionada rule 1-update +
+    rule 9b (copiada do repo), com 1 ajuste manual: caminho do script em
+    `skills/context-search/scripts/search.sh` (sem prefixo `claude/`, que só
+    existe na estrutura do repo agents-harness, não no layout global).
+  - Verificação: `grep -n "^### \|^## "` nos 4 arquivos, diff dos headers
+    repo vs global → idênticos nos dois pares (dev e infra). rc=0 em ambos.
+- Skill `context-search` copiada pra `~/.claude/skills/context-search/`
+  (SKILL.md + scripts/*.sh, chmod +x). Verificação: `bash -n` PASS,
+  `shellcheck` PASS (0 findings) nos 2 scripts, query funcional real
+  ("checkov") retornou match correto do archive real do repo agents-harness
+  (confirma resolução de `git rev-parse --show-toplevel` funcionando a
+  partir da cópia global).
+- `~/.claude/CLAUDE.md`: adicionado bullet `context-search` em
+  "## Skills Ativos" (mesmo texto do `claude/CLAUDE.md` do repo, já corrigido
+  antes).
+- Limitação conhecida, não bloqueante: `search.sh` global tem `claude/skills`
+  e `claude/steering` hardcoded como alvos de busca (convenção de diretório
+  do repo agents-harness) — em outros repos sem esse layout, esses alvos
+  simplesmente não existem e são pulados (`[[ -d ... ]]`), então a busca
+  degrada graciosamente pra só `.specs/audit/archive/` em vez de falhar.
+  Path de upgrade fica aberto se necessário; não é bug, é escopo do RAG-lite
+  como já documentado no `SKILL.md`.
+- Item ainda pendente, fora do escopo desta task: port da Feature 1
+  (output-style `caveman` nativo + `outputStyle` em `settings.json`) do
+  global pro repositório git — não foi pedido nesta sessão, continua em
+  aberto separadamente.
+- Status: DONE (sync completo e verificado, sem overwrite cego)
